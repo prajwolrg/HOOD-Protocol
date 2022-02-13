@@ -211,6 +211,12 @@ contract LendingPoolCore {
 			);
 	}
 
+    function getReserveNormalizedIndex(address _reserve)
+    public view returns (uint256) 
+    {
+        return reserves[_reserve].getNormalizedIncome();
+    }
+
     function getReserveAvailableLiquidity(address _reserve) 
     public view returns (uint) 
     {

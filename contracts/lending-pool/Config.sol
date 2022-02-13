@@ -60,6 +60,15 @@ library Config {
         self.isFreezed = false;
     }
 
+    function getNormalizedIncome(ReserveData storage self) 
+    internal view returns (uint256)
+    {
+        return calculateLinearInterest(
+            self.liquidityRate, 
+            self.lastUpdateTimestamp
+            ).rayMul(self.liquidityCumulativeIndex);
+    }
+
     function updateCumulativeIndexes(ReserveData storage self) internal {
         // uint256 totalBorrows = getTotalBorrows(self); // interface with dToken and balanceOf
         uint256 totalBorrows = 0;
