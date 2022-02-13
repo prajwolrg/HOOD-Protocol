@@ -8,7 +8,7 @@ pragma solidity ^0.5.0;
 
 import "../configuration/AddressProvider.sol";
 import "../lending-pool/LendingPoolCore.sol";
-// import "../lending-pool/LendingPool.sol";
+import "../lending-pool/LendingPool.sol";
 import "hardhat/console.sol";
 import "../utils/WadRayMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -21,7 +21,7 @@ contract DToken is ERC20, ERC20Detailed {
 
     AddressProvider private addressProvider;
     LendingPoolCore private core;
-    // LendingPool private pool;
+    LendingPool private pool;
 
     address public underlyingTokenAddress;
     mapping(address => uint256) private userIndexes;
@@ -36,17 +36,17 @@ contract DToken is ERC20, ERC20Detailed {
             
         addressProvider = AddressProvider(_addressesProvider);
         underlyingTokenAddress = _underlyingTokenAddress;
-        // pool = LendingPool(addressProvider.getLendingPool());
+        pool = LendingPool(addressProvider.getLendingPool());
         core = LendingPoolCore(addressProvider.getLendingPoolCore());
     }
 
-    // modifier onlyLendingPool() {
-    //     require(
-    //         msg.sender == address(pool), 
-    //         "Caller is not lending pool address"
-    //     );
-    //     _;
-    // }
+    modifier onlyLendingPool() {
+        require(
+            msg.sender == address(pool), 
+            "Caller is not lending pool address"
+        );
+        _;
+    }
 
     event Redeem(address indexed account, uint amount);
     event MintOnBorrow(address indexed account, uint amount);
@@ -54,16 +54,19 @@ contract DToken is ERC20, ERC20Detailed {
 
     function mintOnBorrow(address _account, uint256 _amount) 
         external 
-        // onlyLendingPool
+        onlyLendingPool
     {
-        // cumulateBalanceInternal(_account);
+        cumulateBalanceInternal(_account);
     	_mint(_account, _amount);
     	emit MintOnBorrow(_account, _amount);
     }
 
     function burnOnRepay(address _account, uint256 _amount) external {
-        // cumulateBalanceInternal(_account);
+        cumulateBalanceInternal(_account);
         _burn(_account, _amount);
+        if (balanceOf(_account) == 0) {
+            resetOnZeroBalance(_account);
+        }
         emit BurnOnRepay(_account, _amount);
     }
 
@@ -71,81 +74,67 @@ contract DToken is ERC20, ERC20Detailed {
     	return super.balanceOf(_account);
     }
 
-    // function balanceOf(address _account) public view returns (uint) {
-    // 	uint principalBalance = super.balanceOf(_account);
-    // 	// calcualate accured Interest
-    //     return calculateCumulateBalanceInternal(_account, principalBalance);
-    // }
+    function balanceOf(address _account) public view returns (uint) {
+    	uint principalBalance = super.balanceOf(_account);
+        return calculateCumulateBalanceInternal(_account, principalBalance);
+    }
 
-    // function cumulateBalanceInternal( address _user) 
-    //     internal 
-    //     returns(uint256, uint256, uint256, uint256) {
-    //         uint256 prevPrincipalBalance = super.balanceOf(_user);
-    //         uint256 balanceIncrease = balanceOf(_user).sub(prevPrincipalBalance);
-    //         if (balanceIncrease > 0) {
-    //             _mint(_user, balanceIncrease);
-    //         }
-    //         uint index = userIndexes[_user] = core.getReserveNormalizedIndex(underlyingTokenAddress);
-    //         return (
-    //             prevPrincipalBalance, 
-    //             prevPrincipalBalance.add(balanceIncrease), 
-    //             balanceIncrease, 
-    //             index
-    //         );
-    //     }
+    function principalTotalSupply() public view returns(uint256) {
+        return super.totalSupply();
+    }
 
-    // function calculateCumulateBalanceInternal(
-    //     address _user, 
-    //     uint256 _balance
-    // ) internal view returns (uint256) {
-    //     uint userIndex = userIndexes[_user];
-    //     if (userIndex == 0) {
-    //         return 0;
-    //     } else {
-    //         uint assetIndex = core.getReserveNormalizedIndex(underlyingTokenAddress);
-    //         return _balance
-    //             .wadToRay()
-    //             .rayMul(assetIndex)
-    //             .rayDiv(userIndex)
-    //             .rayToWad();
-    //     }
-    // }
+    function totalSupply() public view returns(uint256) {
+        uint256 currentPrincipalTotalSupply = principalTotalSupply();
+        if (currentPrincipalTotalSupply == 0) {
+            return 0;
+        }
+        uint256 assetIndex = core.getReserveNormalizedDebt(underlyingTokenAddress);
+        return currentPrincipalTotalSupply.wadToRay().rayMul(assetIndex).rayToWad();
 
-    // function getUserIndex(address _user) external view returns(uint256) {
-    //     return userIndexes[_user];
-    // }
+    }
 
-    // function redeem(uint256 _amount) external {
-    //     address payable _user = msg.sender;
-    //     uint256 balance = balanceOf(_user);
-    //     uint amountToRedeem = _amount;
+    function cumulateBalanceInternal( address _user) 
+        internal 
+        returns(uint256, uint256, uint256, uint256) {
+            uint256 prevPrincipalBalance = super.balanceOf(_user);
+            uint256 balanceIncrease = balanceOf(_user).sub(prevPrincipalBalance);
+            if (balanceIncrease > 0) {
+                _mint(_user, balanceIncrease);
+            }
+            uint index = userIndexes[_user] = core.getReserveNormalizedDebt(underlyingTokenAddress);
+            return (
+                prevPrincipalBalance, 
+                prevPrincipalBalance.add(balanceIncrease), 
+                balanceIncrease, 
+                index
+            );
+        }
 
-    //     if (_amount == UINT_MAX_VALUE) {
-    //         amountToRedeem = balance;
-    //     }
+    function calculateCumulateBalanceInternal(
+        address _user, 
+        uint256 _balance
+    ) internal view returns (uint256) {
+        uint userIndex = userIndexes[_user];
+        if (userIndex == 0) {
+            return 0;
+        } else {
+            uint assetIndex = core.getReserveNormalizedDebt(underlyingTokenAddress);
+            return _balance.wadToRay().rayMul(assetIndex).rayDiv(userIndex).rayToWad();
+        }
+    }
 
-    //     require(amountToRedeem <= balance, "Insufficent balance to withdraw");
-        
-    //     require(core.isBalanceDecreaseAllowed(underlyingTokenAddress, msg.sender, amountToRedeem), "Redeem not allowed");
+    function getUserIndex(address _user) external view returns(uint256) {
+        return userIndexes[_user];
+    }
 
-    //     burnOnRedeem(msg.sender, amountToRedeem);
+    function resetOnZeroBalance(address _user) internal returns(bool) {
+        uint256 balance = balanceOf(_user);
+        if (balance == 0) {
+            userIndexes[_user] = 0;
+            return true;
+        } else {
+            return false;
+        }
 
-    //     if (balance.sub(amountToRedeem) == 0) {
-    //         resetOnZeroBalance(msg.sender);
-    //     }
-        
-    //     pool.redeem(underlyingTokenAddress, _user, amountToRedeem);
-    //     emit Redeem(msg.sender, amountToRedeem);
-    // }
-
-    // function resetOnZeroBalance(address _user) internal returns(bool) {
-    //     uint256 balance = balanceOf(_user);
-    //     if (balance == 0) {
-    //         userIndexes[_user] = 0;
-    //         return true;
-    //     } else {
-    //         return false;
-    //     }
-
-    // }
+    }
 }

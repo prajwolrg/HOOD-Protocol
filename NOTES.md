@@ -1,5 +1,5 @@
 # TODO
-
-1. Interest is not handled
-2. Health Factor calculation
+1. Health Factor, LTV Calculation
+2. Implement oracle
 3. Checks for borrow and redeem
+4. Testing and deploy on harmony :)

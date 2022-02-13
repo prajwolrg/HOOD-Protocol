@@ -211,10 +211,16 @@ contract LendingPoolCore {
 			);
 	}
 
-    function getReserveNormalizedIndex(address _reserve)
+    function getReserveNormalizedIncome(address _reserve)
     public view returns (uint256) 
     {
         return reserves[_reserve].getNormalizedIncome();
+    }
+
+    function getReserveNormalizedDebt(address _reserve)
+    public view returns (uint256) 
+    {
+        return reserves[_reserve].getNormalizedDebt();
     }
 
     function getReserveAvailableLiquidity(address _reserve) 
@@ -269,7 +275,7 @@ contract LendingPoolCore {
 
     function getBasicReserveData(address _reserve) public view returns
         (
-            uint lastUpdateTimestamp,
+            uint _lastUpdateTimestamp,
             uint borrowRate,
             uint liquidityRate,
             uint totalLiquidity,
@@ -280,7 +286,7 @@ contract LendingPoolCore {
         )
     {
         Config.ReserveData storage reserve = reserves[_reserve];
-        lastUpdateTimestamp = reserve.lastUpdateTimestamp ;
+        _lastUpdateTimestamp = reserve.lastUpdateTimestamp ;
         borrowRate = reserve.borrowRate;
         liquidityRate = reserve.liquidityRate;
         totalLiquidity = getReserveTotalLiquidity(_reserve);

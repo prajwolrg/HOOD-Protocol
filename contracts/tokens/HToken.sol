@@ -85,7 +85,7 @@ contract HToken is ERC20, ERC20Detailed {
         if (currentPrincipalTotalSupply == 0) {
             return 0;
         }
-        uint256 assetIndex = core.getReserveNormalizedIndex(underlyingTokenAddress);
+        uint256 assetIndex = core.getReserveNormalizedIncome(underlyingTokenAddress);
         return currentPrincipalTotalSupply.wadToRay().rayMul(assetIndex).rayToWad();
     }
 
@@ -97,7 +97,7 @@ contract HToken is ERC20, ERC20Detailed {
             if (balanceIncrease > 0) {
                 _mint(_user, balanceIncrease);
             }
-            uint index = userIndexes[_user] = core.getReserveNormalizedIndex(underlyingTokenAddress);
+            uint index = userIndexes[_user] = core.getReserveNormalizedIncome(underlyingTokenAddress);
             return (
                 prevPrincipalBalance, 
                 prevPrincipalBalance.add(balanceIncrease), 
@@ -112,7 +112,7 @@ contract HToken is ERC20, ERC20Detailed {
         if (userIndex == 0) {
             return 0;
         } else {
-            uint assetIndex = core.getReserveNormalizedIndex(underlyingTokenAddress);
+            uint assetIndex = core.getReserveNormalizedIncome(underlyingTokenAddress);
             return _balance.wadToRay().rayMul(assetIndex).rayDiv(userIndex).rayToWad();
         }
     }

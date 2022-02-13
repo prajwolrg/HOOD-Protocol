@@ -69,6 +69,15 @@ library Config {
             ).rayMul(self.liquidityCumulativeIndex);
     }
 
+    function getNormalizedDebt(ReserveData storage self) 
+    internal view returns (uint256)
+    {
+        return calculateLinearInterest(
+            self.borrowRate, 
+            self.lastUpdateTimestamp
+            ).rayMul(self.borrowCumulativeIndex);
+    }
+
     function updateCumulativeIndexes(ReserveData storage self) internal {
         // uint256 totalBorrows = getTotalBorrows(self); // interface with dToken and balanceOf
         uint256 totalBorrows = 0;
