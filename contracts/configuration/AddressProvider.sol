@@ -11,13 +11,19 @@ contract AddressProvider {
 	address public owner;
 	bytes32 private constant LENDING_POOL = "LENDING_POOL";
 	bytes32 private constant LENDING_POOL_CORE = "LENDING_POOL_CORE";
+	bytes32 private constant LENDING_POOL_DATA_PROVIDER = "LENDING_POOL_DATA_PROVIDER";
 	bytes32 private constant PRICE_ORACLE = "PRICE_ORACLE";
 	bytes32 private constant ETH_ADDRESS = "ETH_ADDRESS";
+	bytes32 private constant RESERVE_INITIALIZER = "RESERVE_INITIALIZER";
+	bytes32 private constant CONFIG_LIBRARY = "CONFIG_LIBRARY";
 
 	event LendingPoolUpdated(address indexed  _updatedAddress);
 	event LendingPoolCoreUpdated(address indexed  _updatedAddress);
+	event LendingPoolDatProviderUpdated(address indexed  _updatedAddress);
 	event PriceOracleUpdated(address indexed  _updatedAddress);
 	event EthAddressUpdated(address indexed  _updatedAddress);
+	event ReserveInitializerUpdated(address indexed  _updatedAddress);
+	event ConfigLibraryUpdated(address indexed  _updatedAddress);
 
 	constructor() public {
 		owner = msg.sender;
@@ -47,6 +53,13 @@ contract AddressProvider {
 	}
 
 	/*
+	* Returns lendingPoolDataProvider address
+	*/
+	function getLendingPoolDataProvider() public view returns (address) {
+		return getAddress(LENDING_POOL_DATA_PROVIDER);
+	}
+
+	/*
 	* Returns priceOracle address
 	*/
 	function getPriceOracle() public view returns (address) {
@@ -68,6 +81,20 @@ contract AddressProvider {
 	}
 
 	/*
+	* Returns Reserve Initializer
+	*/
+	function getReserveInitializer() public view returns (address) {
+		return getAddress(RESERVE_INITIALIZER);
+	}
+
+	/*
+	* Returns Config Library
+	*/
+	function getConfigLibrary() public view returns (address) {
+		return getAddress(CONFIG_LIBRARY);
+	}
+
+	/*
 	* Sets lendingPool address
 	*/
 	function setLendingPool(address _lendingPool) public onlyOwner {
@@ -84,6 +111,15 @@ contract AddressProvider {
 	}
 
 	/*
+	* Sets lendingPoolDataProvider address
+	*/
+	function setLendingPoolDataProvider(address _lendingPoolDataProvider) public onlyOwner {
+		setAddress(LENDING_POOL_DATA_PROVIDER, _lendingPoolDataProvider);
+		emit LendingPoolCoreUpdated(_lendingPoolDataProvider);
+	}
+
+
+	/*
 	* Sets priceOracle address
 	*/
 	function setPriceOracle(address _priceOracle) public onlyOwner {
@@ -97,6 +133,22 @@ contract AddressProvider {
 	function setETHAddress(address _eth) public onlyOwner {
 		setAddress(ETH_ADDRESS, _eth);
 		emit EthAddressUpdated(_eth);
+	}
+
+	/*
+	* Sets Reserve Initializer Address
+	*/
+	function setReserveInitializer(address _reserveInitializer) public onlyOwner {
+		setAddress(RESERVE_INITIALIZER, _reserveInitializer);
+		emit ReserveInitializerUpdated(_reserveInitializer);
+	}
+
+	/* 
+	* Sets Config Library Address
+	*/
+	function setConfigLibrary(address _config) public onlyOwner {
+		setAddress(CONFIG_LIBRARY, _config);
+		emit ConfigLibraryUpdated(_config);
 	}
 
 	function getAddress(bytes32 _key) public view returns (address) {

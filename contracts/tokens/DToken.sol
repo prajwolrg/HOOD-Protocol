@@ -2,26 +2,26 @@
 pragma solidity ^0.5.0;
 
 /**
-* @title HOOD ERC20 Token
+* @title HOOD ERC20 Debt Token
 * @author Newton Poudel
 **/
 
 import "../configuration/AddressProvider.sol";
-import "../lending-pool/LendingPool.sol";
+import "../lending-pool/LendingPoolCore.sol";
+// import "../lending-pool/LendingPool.sol";
 import "hardhat/console.sol";
 import "../utils/WadRayMath.sol";
-import "../lending-pool/LendingPoolCore.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
 
-contract HToken is ERC20, ERC20Detailed {
+contract DToken is ERC20, ERC20Detailed {
     uint256 public constant UINT_MAX_VALUE = uint256(-1);
     using WadRayMath for uint256;
 
     AddressProvider private addressProvider;
     LendingPoolCore private core;
-    LendingPool private pool;
+    // LendingPool private pool;
 
     address public underlyingTokenAddress;
     mapping(address => uint256) private userIndexes;
@@ -36,47 +36,46 @@ contract HToken is ERC20, ERC20Detailed {
             
         addressProvider = AddressProvider(_addressesProvider);
         underlyingTokenAddress = _underlyingTokenAddress;
-        pool = LendingPool(addressProvider.getLendingPool());
+        // pool = LendingPool(addressProvider.getLendingPool());
         core = LendingPoolCore(addressProvider.getLendingPoolCore());
     }
 
-    modifier onlyLendingPool() {
-        require(
-            msg.sender == address(pool), 
-            "Caller is not lending pool address"
-        );
-        _;
-    }
+    // modifier onlyLendingPool() {
+    //     require(
+    //         msg.sender == address(pool), 
+    //         "Caller is not lending pool address"
+    //     );
+    //     _;
+    // }
 
     event Redeem(address indexed account, uint amount);
-    event MintOnDeposit(address indexed account, uint amount);
-    event BurnOnRedeem(address indexed account, uint amount);
+    event MintOnBorrow(address indexed account, uint amount);
+    event BurnOnRepay(address indexed account, uint amount);
 
-    function mintOnDeposit(address _account, uint256 _amount) 
+    function mintOnBorrow(address _account, uint256 _amount) 
         external 
-       onlyLendingPool
+        // onlyLendingPool
     {
         // cumulateBalanceInternal(_account);
     	_mint(_account, _amount);
-    	emit MintOnDeposit(_account, _amount);
+    	emit MintOnBorrow(_account, _amount);
     }
 
-    function burnOnRedeem(address _account, uint256 _amount) internal {
+    function burnOnRepay(address _account, uint256 _amount) external {
         // cumulateBalanceInternal(_account);
         _burn(_account, _amount);
-        emit BurnOnRedeem(_account, _amount);
+        emit BurnOnRepay(_account, _amount);
     }
 
     function principalBalanceOf(address _account) public view returns (uint principalBalance) {
     	return super.balanceOf(_account);
     }
 
-    function balanceOf(address _account) public view returns (uint) {
-        return super.balanceOf(_account);
-    	// uint principalBalance = super.balanceOf(_account);
-    	// // calcualate accured Interest
-     //    return calculateCumulateBalanceInternal(_account, principalBalance);
-    }
+    // function balanceOf(address _account) public view returns (uint) {
+    // 	uint principalBalance = super.balanceOf(_account);
+    // 	// calcualate accured Interest
+    //     return calculateCumulateBalanceInternal(_account, principalBalance);
+    // }
 
     // function cumulateBalanceInternal( address _user) 
     //     internal 
@@ -86,12 +85,12 @@ contract HToken is ERC20, ERC20Detailed {
     //         if (balanceIncrease > 0) {
     //             _mint(_user, balanceIncrease);
     //         }
-    //         // uint index = userIndexes[_user] = core.getReserveNormalizedIndex(underlyingTokenAddress);
+    //         uint index = userIndexes[_user] = core.getReserveNormalizedIndex(underlyingTokenAddress);
     //         return (
     //             prevPrincipalBalance, 
     //             prevPrincipalBalance.add(balanceIncrease), 
     //             balanceIncrease, 
-    //             0
+    //             index
     //         );
     //     }
 
@@ -103,8 +102,7 @@ contract HToken is ERC20, ERC20Detailed {
     //     if (userIndex == 0) {
     //         return 0;
     //     } else {
-    //         // uint assetIndex = core.getReserveNormalizedIndex(underlyingTokenAddress);
-    //         uint assetIndex = 1e27;
+    //         uint assetIndex = core.getReserveNormalizedIndex(underlyingTokenAddress);
     //         return _balance
     //             .wadToRay()
     //             .rayMul(assetIndex)
@@ -117,39 +115,37 @@ contract HToken is ERC20, ERC20Detailed {
     //     return userIndexes[_user];
     // }
 
-    function redeem(uint256 _amount) external {
-        address payable _user = msg.sender;
-        uint256 balance = balanceOf(_user);
-        uint amountToRedeem = _amount;
+    // function redeem(uint256 _amount) external {
+    //     address payable _user = msg.sender;
+    //     uint256 balance = balanceOf(_user);
+    //     uint amountToRedeem = _amount;
 
-        if (_amount == UINT_MAX_VALUE) {
-            amountToRedeem = balance;
-        }
+    //     if (_amount == UINT_MAX_VALUE) {
+    //         amountToRedeem = balance;
+    //     }
 
-        require(amountToRedeem <= balance, "Insufficent balance to withdraw");
+    //     require(amountToRedeem <= balance, "Insufficent balance to withdraw");
         
+    //     require(core.isBalanceDecreaseAllowed(underlyingTokenAddress, msg.sender, amountToRedeem), "Redeem not allowed");
+
+    //     burnOnRedeem(msg.sender, amountToRedeem);
+
+    //     if (balance.sub(amountToRedeem) == 0) {
+    //         resetOnZeroBalance(msg.sender);
+    //     }
         
-        
-        // require(core.isBalanceDecreaseAllowed(underlyingTokenAddress, msg.sender, amountToRedeem), "Redeem not allowed");
+    //     pool.redeem(underlyingTokenAddress, _user, amountToRedeem);
+    //     emit Redeem(msg.sender, amountToRedeem);
+    // }
 
-        burnOnRedeem(msg.sender, amountToRedeem);
+    // function resetOnZeroBalance(address _user) internal returns(bool) {
+    //     uint256 balance = balanceOf(_user);
+    //     if (balance == 0) {
+    //         userIndexes[_user] = 0;
+    //         return true;
+    //     } else {
+    //         return false;
+    //     }
 
-        // if (balance.sub(amountToRedeem) == 0) {
-        //     resetOnZeroBalance(msg.sender);
-        // }
-
-        pool.redeem(underlyingTokenAddress, _user, amountToRedeem);
-        emit Redeem(msg.sender, amountToRedeem);
-    }
-
-    function resetOnZeroBalance(address _user) internal returns(bool) {
-        uint256 balance = balanceOf(_user);
-        if (balance == 0) {
-            userIndexes[_user] = 0;
-            return true;
-        } else {
-            return false;
-        }
-
-    }
+    // }
 }
