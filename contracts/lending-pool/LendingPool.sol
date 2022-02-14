@@ -113,7 +113,6 @@ contract LendingPool {
 		(,,,,uint availableLiquidity,,,,,) = dataProvider.getReserveData(_reserve);
 		DToken dToken = DToken(core.getReserveDTokenAddress(_reserve));
 		require(_amount <= availableLiquidity, "Not enough liquidity in this reserve");
-
 		(
     		uint totalLiquidity,
     		uint totalBorrows,
@@ -147,15 +146,15 @@ contract LendingPool {
 		emit Redeem(_reserve, _user, _amount, block.timestamp);
 		}
 	
-	// /* 
-	// * Allows users to repay back their loan for a reserve
-	// */
+	/* 
+	* Allows users to repay back their loan for a reserve
+	*/
 
 	function repay(address _reserve, uint _amount)	
 		external
 		onlyAmountGreaterThanZero(_amount)
 	{
-		(,uint currentBorrowBalance) = dataProvider.getUserReserveData(_reserve, msg.sender);
+		(,uint currentBorrowBalance,,,) = dataProvider.getUserReserveData(_reserve, msg.sender);
 		// calculate cumulated interest as well :)
 		uint amountToReturn = 0;
 

@@ -223,6 +223,12 @@ contract LendingPoolCore {
         return reserves[_reserve].getNormalizedDebt();
     }
 
+    function getReserveLastUserUpdateTimestamp(address _reserve, address _user)
+    public view returns(uint256)
+    {
+        return lastUpdateTimestamp[_user][_reserve];
+    }
+
     function getReserveAvailableLiquidity(address _reserve) 
     public view returns (uint) 
     {

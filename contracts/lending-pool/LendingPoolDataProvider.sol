@@ -6,7 +6,7 @@ import "../tokens/HToken.sol";
 import "../tokens/DToken.sol";
 import "./LendingPoolCore.sol";
 import "hardhat/console.sol";
-// import "../oracle/Oracle.sol";
+import "../oracle/Oracle.sol";
 import "../configuration/AddressProvider.sol";
 
 /** 
@@ -59,33 +59,41 @@ contract LendingPoolDataProvider {
     	return core.getAllReserveList();
     }
 
-    // local variable
+    function getUserReserveData(address _reserve, address _user) public view returns
+    	(
+    		uint256 totalLiquidity, 
+    		uint256 totalBorrows,
+            uint256 totalLiquidityUSD,
+            uint256 totalBorrowsUSD,
+            uint256 lastUpdateTimestamp
+    	) 
+    {
+        Oracle oracle = Oracle(addressProvider.getPriceOracle());
+        uint256 unitPrice = oracle.get_reference_data(_reserve);
+    	totalLiquidity = HToken(core.getReserveHTokenAddress(_reserve)).balanceOf(_user);
+		totalBorrows = DToken(core.getReserveDTokenAddress(_reserve)).balanceOf(_user);
+        totalLiquidityUSD = totalLiquidity.wadMul(unitPrice);
+        totalBorrowsUSD = totalBorrows.wadMul(unitPrice);
+        lastUpdateTimestamp = core.getReserveLastUserUpdateTimestamp(_reserve, _user);
+    }
+
+     // local variable
     struct UserDataLocalVariable {
         // uint reserveDecimals;
         // string  reserveSymbol;
         address reserveAddress;
         // address reserveHTokenAddress;
         // address reserveDTokenAddress;
-        // uint reservePriceInUSD;
+        uint reservePriceInUSD;
         // uint reserveLTV;
         uint reserveHTokenBalance;
         uint reserveDTokenBalance;
+        uint hTokenBalanceUSD;
+        uint dTokenBalanceUSD;
         // uint byReserveDecimals;
         // uint reserveLiquidityUSD;
         // uint reserveBorrowsUSD;
     }
-
-    function getUserReserveData(address _reserve, address _user) public view returns
-    	(
-    		uint256 totalLiquidity, 
-    		uint256 totalBorrows
-    	) 
-    {
-    	// TODO:> balanceOf instead of principalBalanceOf
-    	totalLiquidity = HToken(core.getReserveHTokenAddress(_reserve)).principalBalanceOf(_user);
-		totalBorrows = DToken(core.getReserveDTokenAddress(_reserve)).principalBalanceOf(_user);
-    }
-
 
     function getUserAccountData(address _user) public view returns 
     	(
@@ -97,15 +105,18 @@ contract LendingPoolDataProvider {
     	)
     {
     	UserDataLocalVariable memory vars;
+        Oracle oracle = Oracle(addressProvider.getPriceOracle());
     	address[] memory reserveList = getAllReserves();
 
     	for(uint8 i = 0; i < reserveList.length; i++ ) {
     		vars.reserveAddress = reserveList[i];
-
-    		vars.reserveHTokenBalance = HToken(core.getReserveHTokenAddress(vars.reserveAddress)).principalBalanceOf(_user);
-			vars.reserveDTokenBalance = DToken(core.getReserveDTokenAddress(vars.reserveAddress)).principalBalanceOf(_user);
-			totalLiquidity += vars.reserveHTokenBalance;
-			totalBorrows += vars.reserveDTokenBalance;
+            vars.reservePriceInUSD = oracle.get_reference_data(vars.reserveAddress);
+    		vars.reserveHTokenBalance = HToken(core.getReserveHTokenAddress(vars.reserveAddress)).balanceOf(_user);
+			vars.reserveDTokenBalance = DToken(core.getReserveDTokenAddress(vars.reserveAddress)).balanceOf(_user);
+            vars.hTokenBalanceUSD = vars.reserveHTokenBalance.wadMul(vars.reservePriceInUSD);
+            vars.dTokenBalanceUSD = vars.reserveDTokenBalance.wadMul(vars.reservePriceInUSD);
+			totalLiquidity += vars.hTokenBalanceUSD;
+			totalBorrows += vars.dTokenBalanceUSD;
     	}
 
     	if (totalBorrows == 0) {
@@ -123,19 +134,4 @@ contract LendingPoolDataProvider {
     	return (newTotalBorrows.wadToRay().rayDiv(_ltv)).rayToWad();
         // return ((borrowBalanceUSD.add(requestedAmountUSD)).wadToRay().rayDiv(userLTV)).rayToWad();
     }
-
-   //  function calculateHealthFactorInternal (
-   //      uint256 _collateral,
-   //      uint256 _borrow,
-   //      uint256 _liquidationThreshold
-   //  ) internal pure returns (uint256) {
-   //      if (_borrowUSD == 0) {
-   //          return uint256(-1);
-   //      }
-   //      return (_collateral.rayMul(_liquidationThreshold).wadDiv(_borrow)).wadToRay();
-   //  }
-
-
-
-
 }
