@@ -8,6 +8,7 @@ pragma solidity ^0.5.0;
 
 import "../configuration/AddressProvider.sol";
 import "../lending-pool/LendingPool.sol";
+import "../lending-pool/LendingPoolDataProvider.sol";
 import "hardhat/console.sol";
 import "../utils/WadRayMath.sol";
 import "../lending-pool/LendingPoolCore.sol";
@@ -22,6 +23,7 @@ contract HToken is ERC20, ERC20Detailed {
     AddressProvider private addressProvider;
     LendingPoolCore private core;
     LendingPool private pool;
+    LendingPoolDataProvider private dataProvider;
 
     address public underlyingTokenAddress;
     mapping(address => uint256) private userIndexes;
@@ -138,17 +140,15 @@ contract HToken is ERC20, ERC20Detailed {
         if (_amount == UINT_MAX_VALUE) {
             amountToRedeem = balance;
         }
+        require(amountToRedeem <= balance, "Insufficent balance to withdraw");    
 
-        require(amountToRedeem <= balance, "Insufficent balance to withdraw");
-        
-        // require(core.isBalanceDecreaseAllowed(underlyingTokenAddress, msg.sender, amountToRedeem), "Redeem not allowed");
+        dataProvider = LendingPoolDataProvider(addressProvider.getLendingPoolDataProvider());
+        require(dataProvider.isBalanceDecreaseAllowed(underlyingTokenAddress, msg.sender, amountToRedeem), "Redeem not allowed");
 
         burnOnRedeem(msg.sender, amountToRedeem);
-
         if (balance.sub(amountToRedeem) == 0) {
             resetOnZeroBalance(msg.sender);
         }
-
         pool.redeem(underlyingTokenAddress, _user, amountToRedeem);
         emit Redeem(msg.sender, amountToRedeem);
     }
