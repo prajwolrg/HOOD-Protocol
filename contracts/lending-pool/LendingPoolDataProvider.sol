@@ -36,8 +36,8 @@ contract LendingPoolDataProvider {
 			uint totalLiquidity,
 			uint availableLiquidity,
 			uint totalBorrows,
-			uint baseLTVasCollateral,
-			uint liquidationThresold,
+			uint borrowCumulativeIndex,
+			uint liquidityCumulativeIndex,
 			address hTokenAddress,
 			address dTokenAddress
         )
@@ -48,8 +48,8 @@ contract LendingPoolDataProvider {
 		totalLiquidity = core.getReserveTotalLiquidity(_reserve);
 		availableLiquidity = core.getReserveAvailableLiquidity(_reserve);
 		totalBorrows = core.getReserveTotalBorrows(_reserve);
-		baseLTVasCollateral = core.getReserveBaseLTVasCollateral(_reserve);
-		liquidationThresold = core.getReserveLiquidationThresold(_reserve);
+		borrowCumulativeIndex = core.getReserveBorrowCumulativeIndex(_reserve);
+		liquidityCumulativeIndex = core.getReserveLiquidityCumulativeIndex(_reserve);
 		hTokenAddress = core.getReserveHTokenAddress(_reserve);
 		dTokenAddress = core.getReserveDTokenAddress(_reserve);
 

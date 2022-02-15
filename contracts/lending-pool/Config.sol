@@ -29,8 +29,6 @@ library Config {
         uint lastUpdateTimestamp;
         uint borrowRate;
         uint liquidityRate;
-        uint baseLTVasCollateral;
-        uint liquidationThresold;
         uint borrowCumulativeIndex;
         uint liquidityCumulativeIndex;
         bool isActive;      
@@ -49,8 +47,6 @@ library Config {
         self.borrowCumulativeIndex = WadRayMath.ray();
         self.lastUpdateTimestamp = block.timestamp;
 
-        self.baseLTVasCollateral = 50 * 1e25;
-        self.liquidationThresold = 65 * 1e25;
 
         self.decimals = _decimals;
         self.hTokenAddress = _hTokenAddress;
