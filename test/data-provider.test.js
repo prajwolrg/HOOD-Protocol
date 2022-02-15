@@ -82,12 +82,12 @@ beforeEach(async function () {
     await asset3.addMinter(user1)
 
     // // mint to user2
-    await asset1.connect(wallet1).mint(user2, BigN(101 * 10**18))
+    await asset1.connect(wallet1).mint(user2, BigN(150 * 10**18))
     await asset2.connect(wallet1).mint(user2, BigN(121 * 10**18))
     await asset3.connect(wallet1).mint(user2, BigN(101 * 10**18))
 
     // approve to core, before deposit
-    await asset1.connect(wallet2).approve(core.address, BigN(100 * 10**18))
+    await asset1.connect(wallet2).approve(core.address, BigN(150 * 10**18))
     await asset2.connect(wallet2).approve(core.address, BigN(121 * 10**18))
     await asset3.connect(wallet2).approve(core.address, BigN(100 * 10**18))
 
@@ -153,21 +153,24 @@ describe("HTokens", async function() {
 
 describe("Lending Pool", async function() {
     it ("Should be able to accept borrow and repay: single reserve", async function() {
+        const Asset = await ethers.getContractFactory('Asset');
+        const asset = Asset.attach(asset1Addr);
+        const balanceBefore = await asset.balanceOf(user2);
 
-        await pool.connect(wallet2).deposit(asset1Addr, BigN(100 * 10 ** 18))
-        
+        await pool.connect(wallet2).deposit(asset1Addr, BigN(100 * 10 ** 18))        
         await pool.connect(wallet2).borrow(asset1Addr, BigN(50 * 10 ** 18))
         const asset1DTokenAddress = await core.getReserveDTokenAddress(asset1Addr);
-        const DToken = await ethers.getContractFactory('DToken');
 
+        const DToken = await ethers.getContractFactory('DToken');
         const instance1 = await DToken.attach(asset1DTokenAddress);
+
+        const balanceAfter = await asset.balanceOf(user2);
         expect(await instance1.balanceOf(user2)).to.equal(BigN(50 * 10 ** 18))
 
         await asset1.connect(wallet2).approve(core.address, BigN(100 * 10**18))
-        await pool.connect(wallet2).repay(asset1Addr, BigN(25 * 10 ** 18))
-
-        // almost equal, not exactly because there are borrows
-        // expect(await instance1.balanceOf(user2)).to.equal(BigN(25 * 10 ** 18))
+        // user repays more than their existing loan, now all their loan should clear
+        await pool.connect(wallet2).repay(asset1Addr, BigN(60 * 10 ** 18))
+        expect(await instance1.balanceOf(user2)).to.equal(BigN(0))
     })
 })
 
@@ -185,6 +188,5 @@ describe("Lending Pool Data Provider", async function() {
         await pool.connect(wallet2).deposit(asset2Addr, BigN(100 * 10 ** 18))
         const userReserve2Data = await data.getUserReserveData(asset2Addr, user2)
         expect(userReserve2Data.totalLiquidity).to.equal(BigN(100 * 10 ** 18))
-        console.log(userReserve2Data)
     })
 })
