@@ -19,7 +19,7 @@ contract AddressProvider {
 
 	event LendingPoolUpdated(address indexed  _updatedAddress);
 	event LendingPoolCoreUpdated(address indexed  _updatedAddress);
-	event LendingPoolDatProviderUpdated(address indexed  _updatedAddress);
+	event LendingPoolDataProviderUpdated(address indexed  _updatedAddress);
 	event PriceOracleUpdated(address indexed  _updatedAddress);
 	event EthAddressUpdated(address indexed  _updatedAddress);
 	event ReserveInitializerUpdated(address indexed  _updatedAddress);
@@ -115,7 +115,7 @@ contract AddressProvider {
 	*/
 	function setLendingPoolDataProvider(address _lendingPoolDataProvider) public onlyOwner {
 		setAddress(LENDING_POOL_DATA_PROVIDER, _lendingPoolDataProvider);
-		emit LendingPoolCoreUpdated(_lendingPoolDataProvider);
+		emit LendingPoolDataProviderUpdated(_lendingPoolDataProvider);
 	}
 
 
