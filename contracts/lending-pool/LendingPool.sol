@@ -2,6 +2,7 @@
 pragma solidity >=0.4.21 <0.7.0;
 import "./LendingPoolCore.sol";
 import "./LendingPoolDataProvider.sol";
+import "hardhat/console.sol";
 import "../configuration/AddressProvider.sol";
 import "../tokens/HToken.sol";
 import "../tokens/DToken.sol";
@@ -114,16 +115,15 @@ contract LendingPool {
 		DToken dToken = DToken(core.getReserveDTokenAddress(_reserve));
 		require(_amount <= availableLiquidity, "Not enough liquidity in this reserve");
 		(
-    		uint totalLiquidity,
-    		uint totalBorrows,
-    		uint ltv,,
+    		uint totalLiquidityUSD,
+    		uint totalBorrowsUSD,
+    		uint ltv,,,
     		bool canBeLiquidated
     	) =  dataProvider.getUserAccountData(msg.sender);    	
 		require(!canBeLiquidated, "Health Factor should be above threshold");
-		uint collateralNeeded = dataProvider.calculateCollateralNeeded(_amount, totalBorrows, ltv);
-		require(totalLiquidity >= collateralNeeded, "Insufficient collateral to borrow");
+		uint collateralNeeded = dataProvider.calculateCollateralNeeded(_reserve, _amount, totalBorrowsUSD, ltv);
+		require(totalLiquidityUSD >= collateralNeeded, "Insufficient collateral to borrow");
 		core.updateStateOnBorrow(_reserve, msg.sender, _amount);
-		dToken.mintOnBorrow(msg.sender, _amount);
 		core.transferToUser(_reserve, msg.sender, _amount);
 		emit Borrow(_reserve, msg.sender, _amount, block.timestamp);
 	}
@@ -155,7 +155,6 @@ contract LendingPool {
 		onlyAmountGreaterThanZero(_amount)
 	{
 		(,uint currentBorrowBalance,,,) = dataProvider.getUserReserveData(_reserve, msg.sender);
-		// calculate cumulated interest as well :)
 		uint amountToReturn = 0;
 
 		require(currentBorrowBalance > 0, "User does not have any borrow pending");
@@ -166,15 +165,10 @@ contract LendingPool {
 
 		// update state
 		core.updateStateOnRepay(_reserve, msg.sender, amountToRepay);
-		// need to handle interest
-
 		// return back to user
 		core.transferToUser(_reserve, msg.sender, amountToReturn);
 		// transfer required amount to core
 		core.transferToReserve(_reserve, msg.sender, amountToRepay);
-
-		emit Repay(_reserve, msg.sender, amountToRepay, block.timestamp);
-		
+		emit Repay(_reserve, msg.sender, amountToRepay, block.timestamp);		
 	}
-
 }
