@@ -2,7 +2,7 @@
 pragma solidity >=0.4.21 <0.7.0;
 
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 import "../utils/WadRayMath.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
