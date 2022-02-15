@@ -16,6 +16,7 @@ import "../configuration/AddressProvider.sol";
 
 contract LendingPoolDataProvider {
 	using WadRayMath for uint256;
+    using SafeMath for uint256;
     
     AddressProvider public addressProvider;
     LendingPoolCore public core;
@@ -52,7 +53,6 @@ contract LendingPoolDataProvider {
 		liquidityCumulativeIndex = core.getReserveLiquidityCumulativeIndex(_reserve);
 		hTokenAddress = core.getReserveHTokenAddress(_reserve);
 		dTokenAddress = core.getReserveDTokenAddress(_reserve);
-
     }
 
     function getAllReserves() public view returns(address[] memory) {
@@ -79,20 +79,12 @@ contract LendingPoolDataProvider {
 
      // local variable
     struct UserDataLocalVariable {
-        // uint reserveDecimals;
-        // string  reserveSymbol;
         address reserveAddress;
-        // address reserveHTokenAddress;
-        // address reserveDTokenAddress;
         uint reservePriceInUSD;
-        // uint reserveLTV;
         uint reserveHTokenBalance;
         uint reserveDTokenBalance;
         uint hTokenBalanceUSD;
         uint dTokenBalanceUSD;
-        // uint byReserveDecimals;
-        // uint reserveLiquidityUSD;
-        // uint reserveBorrowsUSD;
     }
 
     function getUserAccountData(address _user) public view returns 
@@ -101,6 +93,7 @@ contract LendingPoolDataProvider {
     		uint totalBorrows,
     		uint ltv,
     		uint liquidationThresold,
+            uint healthFactor,
     		bool canBeLiquidated
     	)
     {
@@ -124,14 +117,51 @@ contract LendingPoolDataProvider {
     	} else {
     		ltv = (totalBorrows.wadDiv(totalLiquidity)).wadToRay();
     	}
-    	liquidationThresold = 65 * 1e25;
-    	canBeLiquidated = false;
+        healthFactor = calculateHealthFactor(totalLiquidity, totalBorrows);
+        if (healthFactor < WadRayMath.ray()) {
+            canBeLiquidated = true;
+        } else {
+    	   canBeLiquidated = false;
+        }
     }
 
-    function calculateCollateralNeeded(uint256 _amount, uint256 _totalBorrows, uint256 _ltv) 
+    function calculateCollateralNeeded(address _reserve, uint256 _amount, uint256 _totalBorrowsUSD, uint256 _ltv) 
     public view returns(uint256) {
-    	uint256 newTotalBorrows = _amount + _totalBorrows;
+        Oracle oracle = Oracle(addressProvider.getPriceOracle());
+        uint256 unitPrice = oracle.get_reference_data(_reserve);        
+    	uint256 newTotalBorrows = _amount.wadMul(unitPrice) + _totalBorrowsUSD;
+
+        if (_ltv == uint(-1)) {
+            return newTotalBorrows.wadMul(2 * 1e18);
+        }
     	return (newTotalBorrows.wadToRay().rayDiv(_ltv)).rayToWad();
-        // return ((borrowBalanceUSD.add(requestedAmountUSD)).wadToRay().rayDiv(userLTV)).rayToWad();
+    }
+
+    function calculateHealthFactor(uint liquidityUSD, uint borrowUSD) 
+    public view returns(uint256) {
+        if (borrowUSD <= 0) {
+            return uint(-1);
+        }
+        uint256 liquidationThrehold = getLiquidationThresold();
+        return liquidityUSD.wadToRay().rayMul(liquidationThrehold).rayDiv(borrowUSD.wadToRay());
+    }
+
+    function getLiquidationThresold()
+    public view returns(uint256) {
+        return core.getLiquidationThresold();
+    }
+
+    function isBalanceDecreaseAllowed(address _reserve, address _user, uint256 _amount) 
+    public view returns (bool) {
+        Oracle oracle = Oracle(addressProvider.getPriceOracle());
+        uint256 unitPrice = oracle.get_reference_data(_reserve);  
+        uint256 amountToDecreaseUSD = _amount.wadMul(unitPrice);
+        (uint256 totalLiquidityUSD, uint256 totalBorrowsUSD,,,,) = getUserAccountData(_user);
+        uint256 newLiquidityUSD = totalLiquidityUSD.add(amountToDecreaseUSD);
+        uint256 newLTV = (totalBorrowsUSD.wadDiv(totalLiquidityUSD)).wadToRay();
+        if (newLTV < getLiquidationThresold()) {
+            return true;
+        }
+        return false;
     }
 }
