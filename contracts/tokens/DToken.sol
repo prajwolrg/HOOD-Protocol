@@ -8,7 +8,6 @@ pragma solidity ^0.5.0;
 
 import "../configuration/AddressProvider.sol";
 import "../lending-pool/LendingPoolCore.sol";
-import "../lending-pool/LendingPool.sol";
 import "hardhat/console.sol";
 import "../utils/WadRayMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -36,32 +35,41 @@ contract DToken is ERC20, ERC20Detailed {
             
         addressProvider = AddressProvider(_addressesProvider);
         underlyingTokenAddress = _underlyingTokenAddress;
-        pool = LendingPool(addressProvider.getLendingPool());
         core = LendingPoolCore(addressProvider.getLendingPoolCore());
     }
 
-    modifier onlyLendingPool() {
+    modifier onlyLendingPoolCore() {
         require(
-            msg.sender == address(pool), 
+            msg.sender == address(core), 
             "Caller is not lending pool address"
         );
         _;
     }
 
-    event Redeem(address indexed account, uint amount);
     event MintOnBorrow(address indexed account, uint amount);
     event BurnOnRepay(address indexed account, uint amount);
 
+    function transfer(address _to, uint256 _amount) public returns(bool) {
+        return false;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _amount) public returns(bool) {
+        return false;
+    }
+
     function mintOnBorrow(address _account, uint256 _amount) 
         external 
-        onlyLendingPool
+        onlyLendingPoolCore
     {
         cumulateBalanceInternal(_account);
     	_mint(_account, _amount);
     	emit MintOnBorrow(_account, _amount);
     }
 
-    function burnOnRepay(address _account, uint256 _amount) external {
+    function burnOnRepay(address _account, uint256 _amount)
+        external 
+        onlyLendingPoolCore 
+    {
         cumulateBalanceInternal(_account);
         _burn(_account, _amount);
         if (balanceOf(_account) == 0) {

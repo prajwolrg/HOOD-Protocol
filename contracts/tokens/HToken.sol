@@ -121,6 +121,15 @@ contract HToken is ERC20, ERC20Detailed {
         return userIndexes[_user];
     }
 
+    function transfer(address _to, uint256 _amount) public returns(bool) {
+        revert("transfer not allowed");
+        return false;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _amount) public returns(bool) {
+        return false;
+    }
+
     function redeem(uint256 _amount) external {
         address payable _user = msg.sender;
         uint256 balance = balanceOf(_user);
