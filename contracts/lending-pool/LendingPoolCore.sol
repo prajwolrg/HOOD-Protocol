@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.21 <0.7.0;
+
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../utils/WadRayMath.sol";
 import "hardhat/console.sol";
-// import "../oracle/Oracle.sol";
 import "../tokens/HToken.sol";
 import "../tokens/DToken.sol";
-
-
 import "./Config.sol";
 import "../configuration/AddressProvider.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -32,8 +30,8 @@ contract LendingPoolCore {
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
 	uint256 internal constant SECONDS_PER_YEAR = 365 days;
-    uint256 internal constant EXA = 1e18;
-    uint256 internal constant RAY = 1e27;
+    uint256 constant LIQUIDATION_THRESHOLD = 0.65 * 1e27;
+    uint256 constant RAY = 1e27;
 
     // constants set to same across all reserves
     uint256 internal constant OPTIMAL_UTILIZATION_RATE = 0.8 * 1e27;
@@ -118,8 +116,7 @@ contract LendingPoolCore {
 		address _reserve, 
 		uint _amount
 		) external onlyLendingPool  {
-
-        reserves[_reserve].updateCumulativeIndexes();
+        updateCumulativeIndexes(_reserve);
 		updateReserveInterestRatesAndTimestampInternal(_reserve, _amount, 0);
 	}
 
@@ -131,7 +128,9 @@ contract LendingPoolCore {
     ) external onlyLendingPool 
     {
         lastUpdateTimestamp[_user][_reserve] = block.timestamp;
-        reserves[_reserve].updateCumulativeIndexes();
+        DToken dToken = DToken(getReserveDTokenAddress(_reserve));
+        dToken.mintOnBorrow(_user, _amount);
+        updateCumulativeIndexes(_reserve);
         updateReserveInterestRatesAndTimestampInternal(_reserve, 0, _amount);
     }
 
@@ -140,7 +139,7 @@ contract LendingPoolCore {
         address _reserve,
         uint256 _amount
     ) external onlyLendingPool {
-        reserves[_reserve].updateCumulativeIndexes();
+        updateCumulativeIndexes(_reserve);
         updateReserveInterestRatesAndTimestampInternal(_reserve, 0, _amount);
     }
 
@@ -151,10 +150,16 @@ contract LendingPoolCore {
         uint _amount
     ) external onlyLendingPool {
         lastUpdateTimestamp[_user][_reserve] = block.timestamp;
-        reserves[_reserve].updateCumulativeIndexes();
         DToken dToken = DToken(getReserveDTokenAddress(_reserve));
         dToken.burnOnRepay(_user, _amount);
+        updateCumulativeIndexes(_reserve);
         updateReserveInterestRatesAndTimestampInternal(_reserve, _amount, 0);
+    }
+
+    function updateCumulativeIndexes(address _reserve) internal {
+        DToken dToken = DToken(getReserveDTokenAddress(_reserve));
+        uint256 totalBorrows = dToken.totalSupply();
+        reserves[_reserve].updateCumulativeIndexes(totalBorrows);
     }
 
     /*
@@ -250,9 +255,7 @@ contract LendingPoolCore {
         return getReserveAvailableLiquidity(_reserve).add(getReserveTotalBorrows(_reserve));
     }
 
-
 	function calculateInterestRate(
-		// address _reserve,
 		uint _availableLiquidity,
 		uint _totalBorrows
 		) internal pure returns (
@@ -287,8 +290,8 @@ contract LendingPoolCore {
             uint totalLiquidity,
             uint availableLiquidity,
             uint totalBorrows,
-            uint baseLTVasCollateral,
-            uint liquidationThresold
+            uint borrowCumulativeIndex,
+            uint liquidityCumulativeIndex
         )
     {
         Config.ReserveData storage reserve = reserves[_reserve];
@@ -298,23 +301,29 @@ contract LendingPoolCore {
         totalLiquidity = getReserveTotalLiquidity(_reserve);
         availableLiquidity = getReserveAvailableLiquidity(_reserve);
         totalBorrows = getReserveTotalBorrows(_reserve);
-        baseLTVasCollateral = reserve.baseLTVasCollateral;
-        liquidationThresold = reserve.liquidationThresold;
+        borrowCumulativeIndex = reserve.borrowCumulativeIndex;
+        liquidityCumulativeIndex = reserve.liquidityCumulativeIndex;
     }
 
     function getBasicReserveInfo(address _reserve) public view returns 
         (
+            uint decimals,
             address hTokenAddress,
             address dTokenAddress,
             bool isActive,
             bool isFreezed
         ) {
             Config.ReserveData storage reserve = reserves[_reserve];
+            decimals = reserve.decimals;
             hTokenAddress = reserve.hTokenAddress;
             dTokenAddress = reserve.dTokenAddress;
             isActive = reserve.isActive;
             isFreezed = reserve.isFreezed;
         }
+
+    function getLiquidationThresold() public view returns (uint256) {
+        return LIQUIDATION_THRESHOLD;
+    }
 
     function getReserveLiquidityRate(address _reserve) public view returns (uint) {
         Config.ReserveData storage reserve = reserves[_reserve];
@@ -324,16 +333,6 @@ contract LendingPoolCore {
     function getReserveBorrowRate(address _reserve) public view returns (uint) {
         Config.ReserveData storage reserve = reserves[_reserve];
         return reserve.borrowRate;
-    }
-
-    function getReserveBaseLTVasCollateral(address _reserve) public view returns (uint) {
-        Config.ReserveData storage reserve = reserves[_reserve];
-        return reserve.baseLTVasCollateral;
-    }
-
-    function getReserveLiquidationThresold(address _reserve) public view returns (uint) {
-        Config.ReserveData storage reserve = reserves[_reserve];
-        return reserve.liquidationThresold;
     }
 
     function getReserveLiquidityCumulativeIndex(address _reserve) public view returns (uint) {

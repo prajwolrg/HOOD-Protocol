@@ -47,7 +47,6 @@ library Config {
         self.borrowCumulativeIndex = WadRayMath.ray();
         self.lastUpdateTimestamp = block.timestamp;
 
-
         self.decimals = _decimals;
         self.hTokenAddress = _hTokenAddress;
         self.dTokenAddress = _dTokenAddress;
@@ -74,18 +73,15 @@ library Config {
             ).rayMul(self.borrowCumulativeIndex);
     }
 
-    function updateCumulativeIndexes(ReserveData storage self) internal {
-        // uint256 totalBorrows = getTotalBorrows(self); // interface with dToken and balanceOf
-        uint256 totalBorrows = 0;
+    function updateCumulativeIndexes(ReserveData storage self, uint256 totalBorrows) internal {
         if (totalBorrows > 0 ) {
-
             uint256 currentLiquidityRate = self.liquidityRate;
             uint256 currentBorrowRate = self.borrowRate;
             uint256 lastUpdateTimestamp = self.lastUpdateTimestamp;
 
             uint256 cumulatedLiquidityInterest = calculateLinearInterest(currentLiquidityRate, lastUpdateTimestamp);
             self.liquidityCumulativeIndex = cumulatedLiquidityInterest.rayMul(self.liquidityCumulativeIndex);
-            uint256 cumulativeBorrowInterest = calculateLinearInterest(currentBorrowRate, lastUpdateTimestamp); // Compounded
+            uint256 cumulativeBorrowInterest = calculateLinearInterest(currentBorrowRate, lastUpdateTimestamp);
             self.borrowCumulativeIndex = cumulativeBorrowInterest.rayMul(self.borrowCumulativeIndex);
         }
     }
