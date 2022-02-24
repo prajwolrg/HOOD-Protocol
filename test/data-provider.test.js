@@ -19,6 +19,8 @@ beforeEach(async function () {
     const Asset = await ethers.getContractFactory("Asset")
     const Oracle = await ethers.getContractFactory("Oracle")
     const Pool = await ethers.getContractFactory("LendingPool")
+    const RewardDistribution = await ethers.getContractFactory("RewardDistribution")
+    const HoodToken = await ethers.getContractFactory("HoodToken")
     const DataProvider = await ethers.getContractFactory("LendingPoolDataProvider")
     const ReserveInitializer = await ethers.getContractFactory("ReserveInitializer")
 
@@ -27,6 +29,8 @@ beforeEach(async function () {
     core = await Core.deploy(ap)
     pool = await Pool.deploy(ap)
     data = await DataProvider.deploy(ap)
+    reward = await RewardDistribution.deploy(ap)
+    hood = await HoodToken.deploy(ap)
     initializer = await ReserveInitializer.deploy(ap)
     oracle = await Oracle.deploy()
 
@@ -37,6 +41,8 @@ beforeEach(async function () {
     addressProvider.setReserveInitializer(initializer.address)
     addressProvider.setConfigLibrary(config.address)
     addressProvider.setPriceOracle(oracle.address)
+    addressProvider.setRewardDistribution(reward.address)
+    addressProvider.setHoodToken(hood.address)
 
     await core.initialize()
     await data.initialize()
@@ -56,10 +62,26 @@ beforeEach(async function () {
     await initializer.initializeReserve(asset2Addr);
     await initializer.initializeReserve(asset3Addr);
 
+
     [owner, wallet1, wallet2] = await ethers.getSigners();
     ownerAddr = await owner.getAddress()
     user1 = await wallet1.getAddress()
     user2 = await wallet2.getAddress()
+
+    asset1HTokenAddress = await core.getReserveHTokenAddress(asset1Addr);
+    asset1DTokenAddress = await core.getReserveDTokenAddress(asset1Addr);
+    asset2HTokenAddress = await core.getReserveHTokenAddress(asset2Addr);
+    asset2DTokenAddress = await core.getReserveDTokenAddress(asset2Addr);
+    asset3HTokenAddress = await core.getReserveHTokenAddress(asset3Addr);
+    asset3DTokenAddress = await core.getReserveDTokenAddress(asset3Addr);
+
+    reward.initializeAssetConfig(asset1HTokenAddress, BigN(20 * 10 ** 16))
+    reward.initializeAssetConfig(asset1DTokenAddress, BigN(10 * 10 ** 16))
+    reward.initializeAssetConfig(asset2HTokenAddress, BigN(20 * 10 ** 16))
+    reward.initializeAssetConfig(asset2DTokenAddress, BigN(10 * 10 ** 16))
+    reward.initializeAssetConfig(asset3HTokenAddress, BigN(20 * 10 ** 16))
+    reward.initializeAssetConfig(asset3DTokenAddress, BigN(10 * 10 ** 16))
+
 
     // set prices of assets    
     const newtPrice = ethers.BigNumber.from(`${parseInt(5 * 10 ** 18)}`); 
@@ -99,6 +121,20 @@ describe("Address Provider, Data Provider", async function () {
 	let a = await data.getAllReserves();
 	expect(a.length).to.equal(3);
   })
+})
+
+describe("Reward Distribution", async function() {
+    it("should initialize asset config properly", async function () {
+        const list = await (reward.getAssetList())
+        expect(list.length).to.equal(6)
+
+        expect(await reward.getAssetPercentage(list[0])).to.equal(BigN(20 * 10 ** 16))
+        expect(await reward.getAssetPercentage(list[1])).to.equal(BigN(10 * 10 ** 16))
+        
+        const asset1Emission = parseInt(await reward.getEmissionPerSecond(list[0])) / 10 ** 18;
+        const expected = 10000 * 0.2 / 86400
+        expect(expected).to.be.equal(asset1Emission)
+    })
 })
 
 
@@ -166,11 +202,18 @@ describe("Lending Pool", async function() {
 
         const balanceAfter = await asset.balanceOf(user2);
         expect(await instance1.balanceOf(user2)).to.equal(BigN(50 * 10 ** 18))
+        
+        await reward.connect(wallet2).claimRewards()
 
+        const hoodBlance = parseInt(await hood.balanceOf(user2))
+        // user has claimed their rewards
+        expect(hoodBlance).to.be.greaterThan(0);
+        
         await asset1.connect(wallet2).approve(core.address, BigN(100 * 10**18))
         // user repays more than their existing loan, now all their loan should clear
         await pool.connect(wallet2).repay(asset1Addr, BigN(60 * 10 ** 18))
         expect(await instance1.balanceOf(user2)).to.equal(BigN(0))
+        
     })
 })
 
