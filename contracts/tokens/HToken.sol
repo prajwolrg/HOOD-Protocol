@@ -8,6 +8,7 @@ pragma solidity ^0.5.0;
 
 import "../configuration/AddressProvider.sol";
 import "../lending-pool/LendingPool.sol";
+import "../rewards/RewardDistribution.sol";
 import "../lending-pool/LendingPoolDataProvider.sol";
 import "hardhat/console.sol";
 import "../utils/WadRayMath.sol";
@@ -60,6 +61,9 @@ contract HToken is ERC20, ERC20Detailed {
     {
         cumulateBalanceInternal(_account);
     	_mint(_account, _amount);
+        uint256 currentBalance = balanceOf(_account);
+        uint256 _totalSupply = totalSupply();
+        handleAction(_account, currentBalance, _totalSupply);
     	emit MintOnDeposit(_account, _amount);
     }
 
@@ -150,6 +154,9 @@ contract HToken is ERC20, ERC20Detailed {
             resetOnZeroBalance(msg.sender);
         }
         pool.redeem(underlyingTokenAddress, _user, amountToRedeem);
+        uint256 currentBalance = balanceOf(_user);
+        uint256 _totalSupply = totalSupply();
+        handleAction(_user, currentBalance, _totalSupply);
         emit Redeem(msg.sender, amountToRedeem);
     }
 
@@ -162,5 +169,10 @@ contract HToken is ERC20, ERC20Detailed {
             return false;
         }
 
+    }
+
+    function handleAction(address _user,uint256 _balance, uint256 _totalSupply) internal {
+        RewardDistribution rewards = RewardDistribution(addressProvider.getRewardDistribution());
+        rewards.handleAction(_user, _balance, _totalSupply);
     }
 }
