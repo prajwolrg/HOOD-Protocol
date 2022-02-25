@@ -28,7 +28,11 @@ const HARMONY_PRIVATE_KEY = "257cc79f6592385715c64440661c0c5a46eb028ae787a69888c
 module.exports = {
   solidity: "0.5.5",
   networks: {
-    testnet: {
+    matic_testnet: {
+      url: `https://rpc-mumbai.maticvigil.com`,
+      accounts: [`0x${HARMONY_PRIVATE_KEY}`]
+    },
+    harmony_testnet: {
       url: `https://api.s0.b.hmny.io`,
       accounts: [`0x${HARMONY_PRIVATE_KEY}`]
     },
