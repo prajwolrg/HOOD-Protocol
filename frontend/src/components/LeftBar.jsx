@@ -1,0 +1,19 @@
+import React from 'react';
+import ListGroup from 'react-bootstrap/ListGroup'
+import styles from '../styles/App.module.css'
+import { Link } from 'react-router-dom';
+import logo from "../assets/logo_transparent.png";
+
+const LeftBar = () => {
+  return (
+    <>
+    <Link to="/"><img src={logo} className={styles.smallerLogo} /></Link>
+    <ListGroup className={styles.extraTopMargin}>
+        <Link to="/"> <p className={styles.hoverOver}>Home</p></Link>
+        <Link to="/reward"> <p className={styles.hoverOver}>Rewards</p></Link>
+      </ListGroup>
+    </>
+  )
+}
+
+export default LeftBar;
