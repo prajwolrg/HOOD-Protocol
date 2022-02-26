@@ -7,7 +7,6 @@ import { Contracts } from "../consts/Contracts";
 import DataProviderArtifact from "../contracts/lending-pool/LendingPoolDataProvider.sol/LendingPoolDataProvider.json";
 import { useState } from "react";
 import { hexToExa } from "../helpers/hexToExa";
-import { loadFromLocalStorage } from "../helpers/localStorage";
 
 
 const UserMarket = ({ user, symbol, reserve }) => {
@@ -35,7 +34,7 @@ const UserMarket = ({ user, symbol, reserve }) => {
             }            
         }
         fetchData();
-    },[])
+    },[user, reserve])
     
     return (
         <Row className={styles.box}>

@@ -27,7 +27,7 @@ const Market = ({ symbol, reserve }) => {
             setTotalBorrows(hexToExa(value.totalBorrows))
         }
         fetchData();
-    },[])
+    },[reserve])
     
     return (
         <Row className={styles.box}>
