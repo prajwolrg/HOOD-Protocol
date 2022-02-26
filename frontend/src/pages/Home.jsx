@@ -26,10 +26,10 @@ const Home = () => {
       <p className={styles.h1}> Overview </p>
       <Tabs>
         <Tab eventKey="home" title="Market">
-          <Overview keyx={"Total"} supply={1000} supplyRate={10} borrow={500} borrowRate={20} />
+          <Overview />
         </Tab>
           <Tab eventKey="profile" title="User">
-            <UserOverview keyx={"User"} user={walletAddr} supply={1000} supplyRate={10} borrow={500} borrowRate={20} />
+            <UserOverview user={walletAddr} />
           </Tab> 
       </Tabs>
       <br /><br />
