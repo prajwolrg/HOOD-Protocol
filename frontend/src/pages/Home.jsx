@@ -22,21 +22,21 @@ const Home = () => {
   return (
     <>
       <p className={styles.title}> HomePage</p>
-
       <p className={styles.h1}> Overview </p>
-      <Tabs>
+      <Tabs bg="dark">
         <Tab eventKey="home" title="Market">
           <Overview />
         </Tab>
-          <Tab eventKey="profile" title="User">
-            <UserOverview user={walletAddr} />
-          </Tab> 
+        <Tab eventKey="profile" title="User">
+          <UserOverview user={walletAddr} />
+        </Tab>
       </Tabs>
       <br /><br />
       <p className={styles.h1}> Markets </p>
 
-      <Tabs className="mb-3">
+      <Tabs >
         <Tab eventKey="" title="All Markets">
+          <br />
           <Row>
             <Col sm={4}>Asset</Col>
             <Col sm={2}>Total Supplied</Col>
@@ -49,20 +49,21 @@ const Home = () => {
             reserves.map(i => <Market key={i.address} symbol={i.symbol} reserve={i.address} />)
           }
         </Tab>
-          <Tab eventKey="profile" title="Your Markets">
-            <Row>
-              <Col sm={4}>Asset</Col>
-              <Col sm={2}>You Supplied</Col>
-              <Col sm={2}>Supply APY</Col>
-              <Col sm={2}>You Borrowed</Col>
-              <Col sm={2}>Borrow APY</Col>
-            </Row>
-            <hr />
+        <Tab eventKey="profile" title="Your Markets">
+          <br />
+          <Row>
+            <Col sm={4}>Asset</Col>
+            <Col sm={2}>You Supplied</Col>
+            <Col sm={2}>Supply APY</Col>
+            <Col sm={2}>You Borrowed</Col>
+            <Col sm={2}>Borrow APY</Col>
+          </Row>
+          <hr />
 
-            {
-              reserves.map(i => <UserMarket key={i.address} user={walletAddr} symbol={i.symbol} reserve={i.address} />)
-            }
-          </Tab>
+          {
+            reserves.map(i => <UserMarket key={i.address} user={walletAddr} symbol={i.symbol} reserve={i.address} />)
+          }
+        </Tab>
       </Tabs>
     </>
   )

@@ -8,10 +8,10 @@ const LeftBar = () => {
   return (
     <>
     <Link to="/"><img  alt="hood protocol logo" src={logo} className={styles.smallerLogo} /></Link>
-    <ListGroup className={styles.extraTopMargin}>
+    <p className={styles.extraTopMargin}>
         <Link to="/"> <p className={styles.hoverOver}>Home</p></Link>
         <Link to="/reward"> <p className={styles.hoverOver}>Rewards</p></Link>
-      </ListGroup>
+      </p>
     </>
   )
 }
