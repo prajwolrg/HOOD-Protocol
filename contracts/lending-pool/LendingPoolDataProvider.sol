@@ -77,6 +77,45 @@ contract LendingPoolDataProvider {
         lastUpdateTimestamp = core.getReserveLastUserUpdateTimestamp(_reserve, _user);
     }
 
+     struct SystemLevelLocalVariable {
+        uint256 totalBorrows;
+        uint256 totalLiquidity;
+        uint256 borrowRate;
+        uint256 liquidityRate;
+        address reserveAddress;
+        uint256 reservePriceInUSD;
+        uint256 totalLiquidityUSD;
+        uint256 totalBorrowsUSD;
+    }
+
+    function getSystemLevelInfo() public view returns 
+        (
+            uint totalLiquidity,
+            uint totalBorrows,
+            uint liquidityRate,
+            uint borrowRate
+        )
+    {
+        SystemLevelLocalVariable memory vars;
+        Oracle oracle = Oracle(addressProvider.getPriceOracle());
+        address[] memory reserveList = getAllReserves();
+        uint len = reserveList.length;
+
+        for(uint8 i = 0; i < len; i++ ) {
+            vars.reserveAddress = reserveList[i];
+            (,vars.borrowRate, vars.liquidityRate, vars.totalLiquidity,,vars.totalBorrows,,,,) = getReserveData(vars.reserveAddress);
+            vars.reservePriceInUSD = oracle.get_reference_data(vars.reserveAddress);
+            vars.totalLiquidityUSD = vars.totalLiquidity.wadMul(vars.reservePriceInUSD);
+            vars.totalBorrowsUSD = vars.totalBorrows.wadMul(vars.reservePriceInUSD);
+            totalLiquidity += vars.totalLiquidityUSD;
+            totalBorrows += vars.totalBorrowsUSD;
+            liquidityRate += vars.liquidityRate;
+            borrowRate += vars.borrowRate;
+        }
+        liquidityRate = liquidityRate.div(len);
+        borrowRate = borrowRate.div(len);
+    }
+
      // local variable
     struct UserDataLocalVariable {
         address reserveAddress;
