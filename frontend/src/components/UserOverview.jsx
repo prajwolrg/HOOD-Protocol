@@ -20,8 +20,8 @@ const UserOverview = ({ user }) => {
                 const dataProvider = new ethers.Contract(Contracts.dataProvider, DataProviderArtifact.abi, provider)
                 const value = await dataProvider.getUserAccountData(user)
                 const response= await dataProvider.getSystemLevelInfo()
-                setLiquidityRate(response.liquidityRate)
-                setBorrowRate(response.borrowRate)
+                setLiquidityRate(hexToExa(response.liquidityRate))
+                setBorrowRate(hexToExa(response.borrowRate))
                 setTotalLiquidity(hexToExa(value.totalLiquidity))
                 setTotalBorrows(hexToExa(value.totalBorrows))
             }

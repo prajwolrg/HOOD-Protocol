@@ -29,8 +29,8 @@ const UserMarket = ({ user, symbol, reserve }) => {
                 setBorrowRate(hexToExa(value.borrowRate))
 
                 const response = await dataProvider.getUserReserveData(reserve, user);
-                setTotalLiquidity(response.totalLiquidity)
-                setTotalBorrows(response.totalBorrows)
+                setTotalLiquidity(hexToExa(response.totalLiquidity))
+                setTotalBorrows(hexToExa(response.totalBorrows))
             }            
         }
         fetchData();
