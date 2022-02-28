@@ -8,15 +8,15 @@ import Reward from "../pages/Reward";
 import { Route, Routes } from 'react-router-dom';
 import styles from "../styles/App.module.css";
 
-const Layout = () => {
+const Layout = ({addr}) => {
     return (
         <Container>
             <Row className={styles.topMargin}>
                 <Col sm={3}><LeftBar /></Col>
                 <Col sm={9}>
                     <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/reward" element={<Reward />} />
+                        <Route path="/" element={<Home addr={addr}/>} />
+                        <Route path="/reward" element={<Reward addr={addr} />} />
                     </Routes></Col>
             </Row>
         </Container>

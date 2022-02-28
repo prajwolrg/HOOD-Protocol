@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-// import Topbar from "./components/Navbar";
-import { ethers } from "ethers";
 import { saveToLocalStorage } from "./helpers/localStorage";
 import { formatAddress } from "./utils/formatting";
 import styles from "./styles/App.module.css"
@@ -40,13 +38,13 @@ const App = () => {
 	return (
 		<div className={styles[`${theme}`]} >
 			<span>
-				<img onClick={switchTheme} src={darkmode} className={styles.ekdamaiSano} />
+				<img alt="dark mode toggle" onClick={switchTheme} src={darkmode} className={styles.ekdamaiSano} />
 			</span>
 			{account ? <span className={styles.rightBorder}>{formatAddress(account)} </span> :
 				<span onClick={connectWallet} className={styles.rightBorder}>
 					Connect Wallet
 				</span>}
-			<Layout />
+			<Layout addr={account} />
 		</div>)
 }
 

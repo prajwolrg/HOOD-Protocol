@@ -7,17 +7,9 @@ import Market from '../components/Market';
 import UserMarket from '../components/UserMarket';
 import { ReserveJson } from '../consts/Reservelist';
 import { useState } from 'react';
-import { loadFromLocalStorage } from '../helpers/localStorage';
-import { useEffect } from 'react';
 
-const Home = () => {
+const Home = ({addr}) => {
   const [reserves] = useState(ReserveJson);
-  const [walletAddr, setWalletAddr] = useState(null);
-
-  useEffect(() => {
-    const address = loadFromLocalStorage("wallet");
-    setWalletAddr(address)
-  }, [])
 
   return (
     <>
@@ -28,7 +20,7 @@ const Home = () => {
           <Overview />
         </Tab>
         <Tab eventKey="profile" title="User">
-          <UserOverview user={walletAddr} />
+          <UserOverview user={addr} />
         </Tab>
       </Tabs>
       <br /><br />
@@ -61,7 +53,7 @@ const Home = () => {
           <hr />
 
           {
-            reserves.map(i => <UserMarket key={i.address} user={walletAddr} symbol={i.symbol} reserve={i.address} />)
+            reserves.map(i => <UserMarket key={i.address} user={addr} symbol={i.symbol} reserve={i.address} />)
           }
         </Tab>
       </Tabs>
