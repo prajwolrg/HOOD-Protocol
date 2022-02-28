@@ -2,7 +2,8 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 import styles from "../styles/App.module.css";
-import { hexToExa } from "../helpers/hexToExa";
+import { formatDecimal } from "../utils/formatNumber";
+import { hexToExa, hexRates } from "../helpers/hexToExa";
 import { ethers } from "ethers";
 import { Contracts } from "../consts/Contracts";
 import DataProviderArtifact from "../contracts/lending-pool/LendingPoolDataProvider.sol/LendingPoolDataProvider.json";
@@ -18,28 +19,28 @@ const Overview = () => {
             const provider = new ethers.providers.Web3Provider(window.ethereum)
             const dataProvider = new ethers.Contract(Contracts.dataProvider, DataProviderArtifact.abi, provider)
             const value = await dataProvider.getSystemLevelInfo()
-            setLiquidityRate(hexToExa(value.liquidityRate))
+            setLiquidityRate(hexRates(value.liquidityRate))
             setTotalLiquidity(hexToExa(value.totalLiquidity))
-            setBorrowRate(hexToExa(value.borrowRate))
+            setBorrowRate(hexRates(value.borrowRate))
             setTotalBorrows(hexToExa(value.totalBorrows))
         }
         fetchData();
     }, [])
     return (
-        <div className={styles.centerAlign} className={styles.box}>
+        <div className={styles.boxCenter}>
             <Row>
                 <Col>
                     Total Supply <br />
-                    ${totalLiquidity}</Col>
+                    ${formatDecimal(totalLiquidity)}</Col>
                 <Col>
                     Supply APY %<br />
-                    {liquidityRate}%</Col>
+                    {formatDecimal(liquidityRate)}%</Col>
                 <Col>
                     Total Borrows<br />
-                    ${totalBorrows}</Col>
+                    ${formatDecimal(totalBorrows)}</Col>
                 <Col>
                     Borrow APY %<br />
-                    %{borrowRate}</Col>
+                    {formatDecimal(borrowRate)}%</Col>
             </Row>
         </div>
     )

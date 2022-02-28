@@ -6,36 +6,45 @@ import { ethers } from "ethers";
 import { Contracts } from "../consts/Contracts";
 import DataProviderArtifact from "../contracts/lending-pool/LendingPoolDataProvider.sol/LendingPoolDataProvider.json";
 import { useState } from "react";
-import { hexToExa } from "../helpers/hexToExa";
-
+import { hexToExa, hexRates } from "../helpers/hexToExa";
+import { loadFromLocalStorage } from "../helpers/localStorage";
+import { formatDecimal } from "../utils/formatNumber";
 
 const UserMarket = ({ user, symbol, reserve }) => {
-    
-    const [liquidityRate, setLiquidityRate] = useState(null)
-    const [borrowRate, setBorrowRate] = useState(null)
-    const [totalLiquidity, setTotalLiquidity] = useState(null)
-    const [totalBorrows, setTotalBorrows] = useState(null)
+    const [liquidityRate, setLiquidityRate] = useState(null);
+    const [borrowRate, setBorrowRate] = useState(null);
+    const [totalLiquidity, setTotalLiquidity] = useState(null);
+    const [totalBorrows, setTotalBorrows] = useState(null);
     const [userActive, setUserActive] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
             if (user) {
-                setUserActive(true)
-                const provider = new ethers.providers.Web3Provider(window.ethereum)
-                const dataProvider = new ethers.Contract(Contracts.dataProvider, DataProviderArtifact.abi, provider)
-                const value = await dataProvider.getReserveData(reserve)
+                setUserActive(true);
+                const provider = new ethers.providers.Web3Provider(
+                    window.ethereum
+                );
+                const dataProvider = new ethers.Contract(
+                    Contracts.dataProvider,
+                    DataProviderArtifact.abi,
+                    provider
+                );
+                const value = await dataProvider.getReserveData(reserve);
 
-                setLiquidityRate(hexToExa(value.liquidityRate))
-                setBorrowRate(hexToExa(value.borrowRate))
+                setLiquidityRate(hexRates(value.liquidityRate));
+                setBorrowRate(hexRates(value.borrowRate));
 
-                const response = await dataProvider.getUserReserveData(reserve, user);
-                setTotalLiquidity(hexToExa(response.totalLiquidity))
-                setTotalBorrows(hexToExa(response.totalBorrows))
-            }            
+                const response = await dataProvider.getUserReserveData(
+                    reserve,
+                    user
+                );
+                setTotalLiquidity(hexToExa(response.totalLiquidity));
+                setTotalBorrows(hexToExa(response.totalBorrows));
+            }
         }
+
         fetchData();
-    },[user, reserve])
-    
+    }, [reserve, user]);
     return (
         <Row className={styles.box}>
         {
@@ -51,5 +60,18 @@ const UserMarket = ({ user, symbol, reserve }) => {
         </Row>
     )
 }
+            <Row className={styles.box} onClick={handleShow}>
+                {userActive ? (
+                    <>
+                        <Col sm={4}>{symbol.toUpperCase()}</Col>
+                        <Col sm={2}>{formatDecimal(totalLiquidity)}</Col>
+                        <Col sm={2}>{formatDecimal(liquidityRate)}%</Col>
+                        <Col sm={2}>{formatDecimal(totalBorrows)}</Col>
+                        <Col sm={2}>{formatDecimal(borrowRate)}%</Col>
+                    </>
+                ) : (
+                    <Col sm={4}>{symbol.toUpperCase()}</Col>
+                )}
+            </Row>
 
 export default UserMarket;

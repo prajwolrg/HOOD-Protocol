@@ -6,7 +6,8 @@ import { ethers } from "ethers";
 import { Contracts } from "../consts/Contracts";
 import DataProviderArtifact from "../contracts/lending-pool/LendingPoolDataProvider.sol/LendingPoolDataProvider.json";
 import { useState } from "react";
-import { hexToExa } from "../helpers/hexToExa";
+import { hexToExa, hexRates } from "../helpers/hexToExa";
+import { formatDecimal } from "../utils/formatNumber";
 
 
 const Market = ({ symbol, reserve }) => {
@@ -21,9 +22,9 @@ const Market = ({ symbol, reserve }) => {
             const provider = new ethers.providers.Web3Provider(window.ethereum)
             const dataProvider = new ethers.Contract(Contracts.dataProvider, DataProviderArtifact.abi, provider)
             const value = await dataProvider.getReserveData(reserve)
-            setLiquidityRate(hexToExa(value.liquidityRate))
+            setLiquidityRate(hexRates(value.liquidityRate))
             setTotalLiquidity(hexToExa(value.totalLiquidity))
-            setBorrowRate(hexToExa(value.borrowRate))
+            setBorrowRate(hexRates(value.borrowRate))
             setTotalBorrows(hexToExa(value.totalBorrows))
         }
         fetchData();
@@ -32,10 +33,10 @@ const Market = ({ symbol, reserve }) => {
     return (
         <Row className={styles.box}>
             <Col sm={4}>{symbol.toUpperCase()}</Col>
-            <Col sm={2}>{totalLiquidity}</Col>
-            <Col sm={2}>{liquidityRate}</Col>
-            <Col sm={2}>{totalBorrows}</Col>
-            <Col sm={2}>{borrowRate}</Col>
+            <Col sm={2}>{formatDecimal(totalLiquidity)}</Col>
+            <Col sm={2}>{formatDecimal(liquidityRate)}%</Col>
+            <Col sm={2}>{formatDecimal(totalBorrows)}</Col>
+            <Col sm={2}>{formatDecimal(borrowRate)}%</Col>
         </Row>
     )
 }
