@@ -7,6 +7,7 @@ import Market from '../components/Market';
 import UserMarket from '../components/UserMarket';
 import { ReserveJson } from '../consts/Reservelist';
 import { useState } from 'react';
+import "../styles/overwrite-bootstrap.css"
 
 const Home = ({addr}) => {
   const [reserves] = useState(ReserveJson);
