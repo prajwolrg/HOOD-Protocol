@@ -5,66 +5,100 @@
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
 
+function BigN(n) {
+    return ethers.BigNumber.from(n.toString())
+}
 async function main() {
-  // const AddressProvider = await ethers.getContractFactory("AddressProvider")
+  contracts = {}
 
-  // const Config = await ethers.getContractFactory("Config")
-  // config = await Config.deploy()
-  // console.log('config', config.address);
+  const AddressProvider = await ethers.getContractFactory("AddressProvider")
 
-  // const Core = await ethers.getContractFactory("LendingPoolCore", {
-  //   libraries: {
-  //       Config: config.address
-  //   }
-  // })
+  const Config = await ethers.getContractFactory("Config")
+  config = await Config.deploy()
+  console.log('config', config.address);
+  contracts['config'] = config.address
+
+  const Core = await ethers.getContractFactory("LendingPoolCore", {
+    libraries: {
+        Config: contracts['config']
+    }
+  })
 
   const Asset = await ethers.getContractFactory("Asset")
-  // const Oracle = await ethers.getContractFactory("Oracle")
-  // const Pool = await ethers.getContractFactory("LendingPool")
-  // const DataProvider = await ethers.getContractFactory("LendingPoolDataProvider")
-  // const ReserveInitializer = await ethers.getContractFactory("ReserveInitializer")
+  const Oracle = await ethers.getContractFactory("Oracle")
+  const Pool = await ethers.getContractFactory("LendingPool")
+  const DataProvider = await ethers.getContractFactory("LendingPoolDataProvider")
+  const ReserveInitializer = await ethers.getContractFactory("ReserveInitializer")
+  const Rewards = await ethers.getContractFactory("RewardDistribution")
+  const Hood = await ethers.getContractFactory("HoodToken")
 
-  // addressProvider = await AddressProvider.deploy()
-  // ap = addressProvider.address
-  // core = await Core.deploy('0xCc34c1Ca005Ad54c268D9eA0c4488409211A68ca')
-  // console.log(core.address);
-  // pool = await Pool.deploy(ap)
-  // data = await DataProvider.deploy(ap)
-  // initializer = await ReserveInitializer.deploy(ap)
-  // oracle = await Oracle.deploy()
-  // console.log(ap, core.address, pool.address, data.address, initializer.address, oracle.address)
+  addressProvider = await AddressProvider.deploy()
+  ap = addressProvider.address
+  contracts['addressProvider'] = ap
+  core = await Core.deploy(ap)
+  contracts['lendingPoolCore'] = core.address
+  pool = await Pool.deploy(ap)
+  contracts['lendingPool'] = pool.address
+  data = await DataProvider.deploy(ap)
+  contracts['lendingPoolDataProvider'] = data.address
+  initializer = await ReserveInitializer.deploy(ap)
+  contracts['initializer'] = initializer.address
+  oracle = await Oracle.deploy()
+  contracts['oracle'] = oracle.address
+  rewards = await Rewards.deploy(ap)
+  contracts['rewards'] = rewards.address
+  hood = await Hood.deploy(ap)
+  contracts['hoodToken'] = hood.address
 
-  // const addressProvider = await AddressProvider.attach('0xCc34c1Ca005Ad54c268D9eA0c4488409211A68ca');
-  // const oracle = await Oracle.attach('0x0a8Ce79F46dC98E09ce73B8CdF1E6f7b89bD8777');
-  // const pool = await Pool.attach('0xadC6C7cf0C8636D57F3972e3C2B3B360Bf5Af900');
-  // const data = await DataProvider.attach('0xE1d217036209b4dF2735E16F93b9A08Af1934F43');
-  // const initializer = await ReserveInitializer.attach('0x22d8E9A1D4ecEBB5E16C1ea669E4695138f9D8b0');
-  // await addressProvider.setLendingPool('0xadC6C7cf0C8636D57F3972e3C2B3B360Bf5Af900')
-  // await addressProvider.setLendingPoolCore(core.address)
-  // await addressProvider.setLendingPoolDataProvider('0xE1d217036209b4dF2735E16F93b9A08Af1934F43')
-  // await addressProvider.setETHAddress('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
-  // await addressProvider.setReserveInitializer('0x22d8E9A1D4ecEBB5E16C1ea669E4695138f9D8b0')
-  // addressProvider.setConfigLibrary(config.address)
-  // await addressProvider.setPriceOracle('0x0a8Ce79F46dC98E09ce73B8CdF1E6f7b89bD8777')
+  await addressProvider.setLendingPool(pool.address)
+  await addressProvider.setLendingPoolCore(core.address)
+  await addressProvider.setLendingPoolDataProvider(data.address)
+  await addressProvider.setETHAddress('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
+  await addressProvider.setReserveInitializer(initializer.address)
+  await addressProvider.setConfigLibrary(config.address)
+  await addressProvider.setPriceOracle(oracle.address)
+  await addressProvider.setHoodToken(hood.address)
+  await addressProvider.setRewardDistribution(rewards.address)
 
-  // await core.initialize()
-  // await data.initialize()
-  // await pool.initialize()
-  // await initializer.initialize()
+  await core.initialize()
+  await data.initialize()
+  await pool.initialize()
+  await initializer.initialize()
 
-  asset1 = await Asset.deploy("USD Hood", "USDH", 18);
+  asset1 = await Asset.deploy("United States Dollar", "USD", 18);
   asset1Addr = asset1.address;
+  contracts['usd'] = asset1Addr
 
-  asset2 = await Asset.deploy("NRS Hood", "NRSH", 18);
+  asset2 = await Asset.deploy("Nepali Rupees", "NRS", 18);
   asset2Addr = asset2.address;
+  contracts['nrs'] = asset2Addr
 
-  asset3 = await Asset.deploy("Newton Token", "NEWT", 18);
+  asset3 = await Asset.deploy("Indigo", "INDG", 18);
   asset3Addr = asset3.address;
-  console.log(asset1Addr, asset2Addr, asset3Addr)
+  contracts['indg'] = asset3Addr
 
-  // await initializer.initializeReserve(asset1Addr);
-  // await initializer.initializeReserve(asset2Addr);
-  // await initializer.initializeReserve(asset3Addr);
+  console.table(contracts)
+
+  await asset1.mint('0xE0486d4AF0Fc6d030BbC7C4Ca5336592781F340b', BigN(999 * 10 ** 18))
+  await asset2.mint('0xE0486d4AF0Fc6d030BbC7C4Ca5336592781F340b', BigN(999 * 10 ** 18))
+  await asset3.mint('0xE0486d4AF0Fc6d030BbC7C4Ca5336592781F340b', BigN(999 * 10 ** 18))
+
+
+  // initializer = ReserveInitializer.attach(contracts['initializer'])
+  // asset1 = Asset.attach(contracts['usd'])
+  // asset2 = Asset.attach(contracts['nrs'])
+  // asset3 = Asset.attach(contracts['indg'])
+  // pool = Pool.attach(contracts['lendingPool'])
+  // oracle = Oracle.attach(contracts['oracle'])
+
+  // console.log(contracts)
+
+  // const tx = await initializer.initializeReserve(contracts['usd']);
+  // console.log("reserve initialized", tx)
+  // await initializer.initializeReserve(contracts['nrs']);
+  // console.log("reserve initialized")
+  // await initializer.initializeReserve(contracts['indg']);
+  // console.log("reserve initialized")
 
   // [owner, wallet1, wallet2] = await ethers.getSigners();
   // ownerAddr = await owner.getAddress()
@@ -76,9 +110,18 @@ async function main() {
   // const usdPrice = ethers.BigNumber.from(`${parseInt(1 * 10 ** 18)}`); 
   // const nrsPrice = ethers.BigNumber.from(`${parseInt((10 ** 18)/120)}`); 
 
-  // await oracle.set_reference_data(asset1Addr, usdPrice); // [usd][usd] = 1
-  // await oracle.set_reference_data(asset2Addr, nrsPrice); // [nrs][usd] = 1/120
-  // await oracle.set_reference_data(asset3Addr, newtPrice); // [newt][usd] = 5
+  // await oracle.set_reference_data(contracts['usd'], usdPrice); // [usd][usd] = 1
+  // await oracle.set_reference_data(contracts['nrs'], nrsPrice); // [nrs][usd] = 1/120
+  // await oracle.set_reference_data(contracts['indg'], newtPrice); // [newt][usd] = 5
+
+
+  // await asset1.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
+  // await asset2.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
+  // await asset3.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
+
+  // await pool.deposit(contracts['usd'], BigN(200 * 10 ** 18))
+  // await pool.deposit(contracts['nrs'], BigN(200 * 10 ** 18))
+  // await pool.deposit(contracts['indg'], BigN(200 * 10 ** 18))
 
   // const getNrsPrice = await oracle.get_reference_data(asset2Addr);
   // const getNewtPrice = await oracle.get_reference_data(asset3Addr);
@@ -87,17 +130,19 @@ async function main() {
   // expect(getNewtPrice).to.equal(newtPrice);
 
   // // make a1 the minter
-  // await asset1.addMinter(user1)
+  // await asset1.addMinter('0xB6c355d81bdec9592Edd221cA7d162B48b465420')
   // await asset2.addMinter(user1)
   // await asset3.addMinter(user1)
 
   // // // mint to user2
-  // await asset1.connect(wallet1).mint(user2, BigN(101 * 10**18))
+  // await asset1.mint("0x6195817Bf6849cC2d160664d13075Fc0D258B090", BigN(101 * 10**18))
   // await asset2.connect(wallet1).mint(user2, BigN(121 * 10**18))
   // await asset3.connect(wallet1).mint(user2, BigN(101 * 10**18))
 
   // // approve to core, before deposit
-  // await asset1.connect(wallet2).approve(core.address, BigN(100 * 10**18))
+  // await asset1.approve('0x4283fD76deE17441Edb70a3a04a32565bFBc513D', BigN(100 * 10**18))
+  // await pool.deposit(asset1.address, BigN(100 * 10 ** 18))
+  // await pool.borrow(asset1.address, BigN(10 * 10 ** 18))
   // await asset2.connect(wallet2).approve(core.address, BigN(121 * 10**18))
   // await asset3.connect(wallet2).approve(core.address, BigN(100 * 10**18))
 }
