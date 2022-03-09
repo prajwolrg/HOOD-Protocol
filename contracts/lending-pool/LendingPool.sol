@@ -116,6 +116,7 @@ contract LendingPool {
 		require(_amount <= availableLiquidity, "Not enough liquidity in this reserve");
 		(
     		uint totalLiquidityUSD,
+			uint totalCollateralUSD,
     		uint totalBorrowsUSD,
     		uint ltv,,,
     		bool canBeLiquidated

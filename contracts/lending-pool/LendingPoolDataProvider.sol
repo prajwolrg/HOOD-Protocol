@@ -129,6 +129,7 @@ contract LendingPoolDataProvider {
     function getUserAccountData(address _user) public view returns 
     	(
     		uint totalLiquidity,
+            uint totalCollateral,
     		uint totalBorrows,
     		uint ltv,
     		uint liquidationThresold,
@@ -151,6 +152,7 @@ contract LendingPoolDataProvider {
 			totalBorrows += vars.dTokenBalanceUSD;
     	}
 
+        totalCollateral = totalLiquidity.sub(totalBorrows.mul(2));
     	if (totalBorrows == 0) {
     		ltv = uint(-1);
     	} else {
@@ -167,13 +169,9 @@ contract LendingPoolDataProvider {
     function calculateCollateralNeeded(address _reserve, uint256 _amount, uint256 _totalBorrowsUSD, uint256 _ltv) 
     public view returns(uint256) {
         Oracle oracle = Oracle(addressProvider.getPriceOracle());
-        uint256 unitPrice = oracle.get_reference_data(_reserve);        
+        uint256 unitPrice = oracle.get_reference_data(_reserve);       
     	uint256 newTotalBorrows = _amount.wadMul(unitPrice) + _totalBorrowsUSD;
-
-        if (_ltv == uint(-1)) {
-            return newTotalBorrows.wadMul(2 * 1e18);
-        }
-    	return (newTotalBorrows.wadToRay().rayDiv(_ltv)).rayToWad();
+        return newTotalBorrows.mul(2);
     }
 
     function calculateHealthFactor(uint liquidityUSD, uint borrowUSD) 
@@ -195,7 +193,7 @@ contract LendingPoolDataProvider {
         Oracle oracle = Oracle(addressProvider.getPriceOracle());
         uint256 unitPrice = oracle.get_reference_data(_reserve);  
         uint256 amountToDecreaseUSD = _amount.wadMul(unitPrice);
-        (uint256 totalLiquidityUSD, uint256 totalBorrowsUSD,,,,) = getUserAccountData(_user);
+        (uint256 totalLiquidityUSD, ,uint256 totalBorrowsUSD,,,,) = getUserAccountData(_user);
         uint256 newLiquidityUSD = totalLiquidityUSD.add(amountToDecreaseUSD);
         uint256 newLTV = (totalBorrowsUSD.wadDiv(totalLiquidityUSD)).wadToRay();
         if (newLTV < getLiquidationThresold()) {
