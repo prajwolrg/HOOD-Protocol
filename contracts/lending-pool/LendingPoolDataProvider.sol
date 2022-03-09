@@ -166,6 +166,19 @@ contract LendingPoolDataProvider {
         }
     }
 
+    function availableBorrowsUSD(address _user) public view returns (uint256) {
+        (uint256 totalLiquidity, ,uint256 totalBorrows,,,,) = getUserAccountData(_user);
+        return (totalLiquidity.sub(totalBorrows.mul(2))).div(2);
+    }
+
+    function reserveAvailableBorrows(address _reserve, address _user) 
+    public view returns (uint256) {
+        Oracle oracle = Oracle(addressProvider.getPriceOracle());
+        uint _availableBorrowsUSD = availableBorrowsUSD(_user);
+        uint unitPrice = oracle.get_reference_data(_reserve);
+        return _availableBorrowsUSD.wadDiv(unitPrice);
+    }
+
     function calculateCollateralNeeded(address _reserve, uint256 _amount, uint256 _totalBorrowsUSD, uint256 _ltv) 
     public view returns(uint256) {
         Oracle oracle = Oracle(addressProvider.getPriceOracle());
