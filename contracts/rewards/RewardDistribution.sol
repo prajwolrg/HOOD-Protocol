@@ -25,6 +25,11 @@ contract RewardDistribution{
         addressProvider = AddressProvider(_addressProvider);
     }
 
+    function initialize() external onlyAdmin {
+        HoodToken hoodToken = HoodToken(addressProvider.getHoodToken());
+        hoodToken.mintDailyRewards();
+    }
+
     modifier onlyAdmin () {
 		require(msg.sender == admin,
 			"Caller must be admin");
@@ -79,7 +84,6 @@ contract RewardDistribution{
     function mintDailyRewards() internal{
         uint currentTime = block.timestamp;
         HoodToken hoodToken = HoodToken(addressProvider.getHoodToken());
-        hoodToken.mintDailyRewards();
         if ((currentTime - rewardTimestamp) > SECONDS_PER_DAY) {
             hoodToken.mintDailyRewards();
             rewardTimestamp = currentTime;
