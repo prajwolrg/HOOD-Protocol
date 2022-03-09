@@ -48,6 +48,7 @@ beforeEach(async function () {
     await data.initialize()
     await pool.initialize()
     await initializer.initialize()
+    await reward.initialize()
 
     asset1 = await Asset.deploy("USD Hood", "USDH", 18);
     asset1Addr = asset1.address;
@@ -194,14 +195,16 @@ describe("Lending Pool", async function() {
         const balanceBefore = await asset.balanceOf(user2);
 
         await pool.connect(wallet2).deposit(asset1Addr, BigN(100 * 10 ** 18))        
-        await pool.connect(wallet2).borrow(asset1Addr, BigN(50 * 10 ** 18))
+        await pool.connect(wallet2).borrow(asset1Addr, BigN(40 * 10 ** 18))
         const asset1DTokenAddress = await core.getReserveDTokenAddress(asset1Addr);
 
         const DToken = await ethers.getContractFactory('DToken');
         const instance1 = await DToken.attach(asset1DTokenAddress);
 
         const balanceAfter = await asset.balanceOf(user2);
-        expect(await instance1.balanceOf(user2)).to.equal(BigN(50 * 10 ** 18))
+        expect(await instance1.balanceOf(user2)).to.equal(BigN(40 * 10 ** 18))    
+
+        await pool.connect(wallet2).borrow(asset1Addr, BigN(9 * 10 ** 18))
         
         await reward.connect(wallet2).claimRewards()
 
