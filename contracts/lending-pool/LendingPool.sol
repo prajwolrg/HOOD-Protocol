@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.21 <0.7.0;
 import "./LendingPoolCore.sol";
+import "./LendingPoolDataProvider.sol";
+import "hardhat/console.sol";
 import "../configuration/AddressProvider.sol";
 import "../tokens/HToken.sol";
+import "../tokens/DToken.sol";
 
 /**
 * @title LendingPool
@@ -14,6 +17,7 @@ contract LendingPool {
 	string public name = "LENDING POOL";
 	LendingPoolCore public core;
 	AddressProvider public addressProvider;
+    LendingPoolDataProvider public dataProvider;
 
 	event Deposit (
 		address indexed _reserve,
@@ -49,6 +53,7 @@ contract LendingPool {
 
 	function initialize() public {
 		core = LendingPoolCore(addressProvider.getLendingPoolCore());
+		dataProvider = LendingPoolDataProvider(addressProvider.getLendingPoolDataProvider());
 	}
 
 	/*
@@ -81,19 +86,16 @@ contract LendingPool {
 	*/
 	function deposit(address _reserve, uint _amount) 
 		external
-		payable 
 		onlyActiveReserve(_reserve)
 		onlyAmountGreaterThanZero(_amount)
 	{
 		HToken hToken = HToken(core.getReserveHTokenAddress(_reserve));
 
-		// bool isFirstDeposit = hToken.balanceOf(msg.sender) == 0;
-
-		core.updateStateOnDeposit(_reserve, /*msg.sender,*/ _amount);
+		core.updateStateOnDeposit(_reserve, _amount);
 
 		hToken.mintOnDeposit(msg.sender, _amount);
 
-		core.transferToReserve.value(msg.value)(_reserve, msg.sender, _amount);
+		core.transferToReserve(_reserve, msg.sender, _amount);
 
 		emit Deposit(_reserve, msg.sender, _amount, block.timestamp);
 	}
@@ -109,28 +111,19 @@ contract LendingPool {
 		onlyUnfreezedReserve(_reserve)
 		onlyAmountGreaterThanZero(_amount)
 	{
-		require(core.getReserveIsBorrowEnabled(_reserve), "Borrowing this reserve disabled");
-		(
-			, uint256 availableLiquidity,,,,,
-		) = core.getReserveData(_reserve); // data type
-
+		(,,,,uint availableLiquidity,,,,,) = dataProvider.getReserveData(_reserve);
+		DToken dToken = DToken(core.getReserveDTokenAddress(_reserve));
 		require(_amount <= availableLiquidity, "Not enough liquidity in this reserve");
-		// get user data
 		(
-			, uint256 userCollateralUSD,
-			uint256 userBorrowBalanceUSD,
-			,
-			uint userLTV,,
-			bool healthFactorBelowThreshold
-		) = core.getUserAccountData(msg.sender); // data type
-		require(!healthFactorBelowThreshold, "Health Factor should be above threshold");
-		uint collateralNeededUSD = core.calculateCollateralNeeded(
-			_reserve, 
-			_amount, 
-			userBorrowBalanceUSD,
-			userLTV
-			);
-		require(userCollateralUSD >= collateralNeededUSD, "Insufficient collateral for borrow");
+    		uint totalLiquidityUSD,
+			uint totalCollateralUSD,
+    		uint totalBorrowsUSD,
+    		uint ltv,,,
+    		bool canBeLiquidated
+    	) =  dataProvider.getUserAccountData(msg.sender);    	
+		require(!canBeLiquidated, "Health Factor should be above threshold");
+		uint collateralNeeded = dataProvider.calculateCollateralNeeded(_reserve, _amount, totalBorrowsUSD, ltv);
+		require(totalLiquidityUSD >= collateralNeeded, "Insufficient collateral to borrow");
 		core.updateStateOnBorrow(_reserve, msg.sender, _amount);
 		core.transferToUser(_reserve, msg.sender, _amount);
 		emit Borrow(_reserve, msg.sender, _amount, block.timestamp);
@@ -146,17 +139,11 @@ contract LendingPool {
 		onlyActiveReserve(_reserve)
 		onlyAmountGreaterThanZero(_amount) 
 	{
-		(
-			, uint256 availableLiquidity,,,, address hTokenAddress,
-		) = core.getReserveData(_reserve);
-		
+		(,,,,uint availableLiquidity,,,,address hTokenAddress,) = dataProvider.getReserveData(_reserve);
 		require(msg.sender == hTokenAddress, "Only respective hToken can call this method");
 		require(availableLiquidity >= _amount, "Not enough liquidity in the reserve");
-		
-		core.updateStateOnRedeem(_reserve, /*_user,*/ _amount);
-		
-		core.transferToUser(_reserve, _user, _amount);
-		
+		core.updateStateOnRedeem(_reserve, _amount);
+		core.transferToUser(_reserve, _user, _amount);		
 		emit Redeem(_reserve, _user, _amount, block.timestamp);
 		}
 	
@@ -168,8 +155,7 @@ contract LendingPool {
 		external
 		onlyAmountGreaterThanZero(_amount)
 	{
-		// (,,uint256 currentBorrowBalance,,,,) = core.getUserReserveData(_reserve, _user);
-		(,uint currentBorrowBalance, uint balanceIncrease) = core.getUserBorrowBalances(_reserve, msg.sender);
+		(,uint currentBorrowBalance,,,) = dataProvider.getUserReserveData(_reserve, msg.sender);
 		uint amountToReturn = 0;
 
 		require(currentBorrowBalance > 0, "User does not have any borrow pending");
@@ -179,15 +165,11 @@ contract LendingPool {
 		uint amountToRepay = _amount - amountToReturn;
 
 		// update state
-		core.updateStateOnRepay(_reserve, msg.sender, amountToRepay, balanceIncrease);
-
+		core.updateStateOnRepay(_reserve, msg.sender, amountToRepay);
 		// return back to user
 		core.transferToUser(_reserve, msg.sender, amountToReturn);
 		// transfer required amount to core
 		core.transferToReserve(_reserve, msg.sender, amountToRepay);
-
-		emit Repay(_reserve, msg.sender, amountToRepay, block.timestamp);
-		
+		emit Repay(_reserve, msg.sender, amountToRepay, block.timestamp);		
 	}
-
 }

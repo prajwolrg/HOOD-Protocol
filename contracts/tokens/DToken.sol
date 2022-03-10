@@ -2,29 +2,26 @@
 pragma solidity ^0.5.0;
 
 /**
-* @title HOOD ERC20 Token
+* @title HOOD ERC20 Debt Token
 * @author Newton Poudel
 **/
 
 import "../configuration/AddressProvider.sol";
-import "../lending-pool/LendingPool.sol";
+import "../lending-pool/LendingPoolCore.sol";
 import "../rewards/RewardDistribution.sol";
-import "../lending-pool/LendingPoolDataProvider.sol";
 import "hardhat/console.sol";
 import "../utils/WadRayMath.sol";
-import "../lending-pool/LendingPoolCore.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
 
-contract HToken is ERC20, ERC20Detailed {
+contract DToken is ERC20, ERC20Detailed {
     uint256 public constant UINT_MAX_VALUE = uint256(-1);
     using WadRayMath for uint256;
 
     AddressProvider private addressProvider;
     LendingPoolCore private core;
-    LendingPool private pool;
-    LendingPoolDataProvider private dataProvider;
+    // LendingPool private pool;
 
     address public underlyingTokenAddress;
     mapping(address => uint256) private userIndexes;
@@ -39,38 +36,53 @@ contract HToken is ERC20, ERC20Detailed {
             
         addressProvider = AddressProvider(_addressesProvider);
         underlyingTokenAddress = _underlyingTokenAddress;
-        pool = LendingPool(addressProvider.getLendingPool());
         core = LendingPoolCore(addressProvider.getLendingPoolCore());
     }
 
-    modifier onlyLendingPool() {
+    modifier onlyLendingPoolCore() {
         require(
-            msg.sender == address(pool), 
+            msg.sender == address(core), 
             "Caller is not lending pool address"
         );
         _;
     }
 
-    event Redeem(address indexed account, uint amount);
-    event MintOnDeposit(address indexed account, uint amount);
-    event BurnOnRedeem(address indexed account, uint amount);
+    event MintOnBorrow(address indexed account, uint amount);
+    event BurnOnRepay(address indexed account, uint amount);
 
-    function mintOnDeposit(address _account, uint256 _amount) 
+    function transfer(address _to, uint256 _amount) public returns(bool) {
+        return false;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _amount) public returns(bool) {
+        return false;
+    }
+
+    function mintOnBorrow(address _account, uint256 _amount) 
         external 
-       onlyLendingPool
+        onlyLendingPoolCore
     {
         cumulateBalanceInternal(_account);
     	_mint(_account, _amount);
         uint256 currentBalance = balanceOf(_account);
         uint256 _totalSupply = totalSupply();
         handleAction(_account, currentBalance, _totalSupply);
-    	emit MintOnDeposit(_account, _amount);
+    	emit MintOnBorrow(_account, _amount);
     }
 
-    function burnOnRedeem(address _account, uint256 _amount) internal {
+    function burnOnRepay(address _account, uint256 _amount)
+        external 
+        onlyLendingPoolCore 
+    {
         cumulateBalanceInternal(_account);
         _burn(_account, _amount);
-        emit BurnOnRedeem(_account, _amount);
+        if (balanceOf(_account) == 0) {
+            resetOnZeroBalance(_account);
+        }
+        uint256 currentBalance = balanceOf(_account);
+        uint256 _totalSupply = totalSupply();
+        handleAction(_account, currentBalance, _totalSupply);
+        emit BurnOnRepay(_account, _amount);
     }
 
     function principalBalanceOf(address _account) public view returns (uint principalBalance) {
@@ -78,21 +90,22 @@ contract HToken is ERC20, ERC20Detailed {
     }
 
     function balanceOf(address _account) public view returns (uint) {
-    	uint principalBalance = principalBalanceOf(_account);
+    	uint principalBalance = super.balanceOf(_account);
         return calculateCumulateBalanceInternal(_account, principalBalance);
     }
 
-    function principalTotalSupply() public view returns (uint) {
+    function principalTotalSupply() public view returns(uint256) {
         return super.totalSupply();
     }
 
-    function totalSupply() public view returns(uint) {
+    function totalSupply() public view returns(uint256) {
         uint256 currentPrincipalTotalSupply = principalTotalSupply();
         if (currentPrincipalTotalSupply == 0) {
             return 0;
         }
-        uint256 assetIndex = core.getReserveNormalizedIncome(underlyingTokenAddress);
+        uint256 assetIndex = core.getReserveNormalizedDebt(underlyingTokenAddress);
         return currentPrincipalTotalSupply.wadToRay().rayMul(assetIndex).rayToWad();
+
     }
 
     function cumulateBalanceInternal( address _user) 
@@ -103,7 +116,7 @@ contract HToken is ERC20, ERC20Detailed {
             if (balanceIncrease > 0) {
                 _mint(_user, balanceIncrease);
             }
-            uint index = userIndexes[_user] = core.getReserveNormalizedIncome(underlyingTokenAddress);
+            uint index = userIndexes[_user] = core.getReserveNormalizedDebt(underlyingTokenAddress);
             return (
                 prevPrincipalBalance, 
                 prevPrincipalBalance.add(balanceIncrease), 
@@ -112,52 +125,21 @@ contract HToken is ERC20, ERC20Detailed {
             );
         }
 
-    function calculateCumulateBalanceInternal(address _account, uint256 _balance)
-    internal view returns(uint256) {
-        uint256 userIndex = userIndexes[_account];
+    function calculateCumulateBalanceInternal(
+        address _user, 
+        uint256 _balance
+    ) internal view returns (uint256) {
+        uint userIndex = userIndexes[_user];
         if (userIndex == 0) {
             return 0;
         } else {
-            uint assetIndex = core.getReserveNormalizedIncome(underlyingTokenAddress);
+            uint assetIndex = core.getReserveNormalizedDebt(underlyingTokenAddress);
             return _balance.wadToRay().rayMul(assetIndex).rayDiv(userIndex).rayToWad();
         }
     }
 
     function getUserIndex(address _user) external view returns(uint256) {
         return userIndexes[_user];
-    }
-
-    function transfer(address _to, uint256 _amount) public returns(bool) {
-        revert("transfer not allowed");
-        return false;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _amount) public returns(bool) {
-        return false;
-    }
-
-    function redeem(uint256 _amount) external {
-        address payable _user = msg.sender;
-        uint256 balance = balanceOf(_user);
-        uint amountToRedeem = _amount;
-
-        if (_amount == UINT_MAX_VALUE) {
-            amountToRedeem = balance;
-        }
-        require(amountToRedeem <= balance, "Insufficent balance to withdraw");    
-
-        dataProvider = LendingPoolDataProvider(addressProvider.getLendingPoolDataProvider());
-        require(dataProvider.isBalanceDecreaseAllowed(underlyingTokenAddress, msg.sender, amountToRedeem), "Redeem not allowed");
-
-        burnOnRedeem(msg.sender, amountToRedeem);
-        if (balance.sub(amountToRedeem) == 0) {
-            resetOnZeroBalance(msg.sender);
-        }
-        pool.redeem(underlyingTokenAddress, _user, amountToRedeem);
-        uint256 currentBalance = balanceOf(_user);
-        uint256 _totalSupply = totalSupply();
-        handleAction(_user, currentBalance, _totalSupply);
-        emit Redeem(msg.sender, amountToRedeem);
     }
 
     function resetOnZeroBalance(address _user) internal returns(bool) {
@@ -168,7 +150,6 @@ contract HToken is ERC20, ERC20Detailed {
         } else {
             return false;
         }
-
     }
 
     function handleAction(address _user,uint256 _balance, uint256 _totalSupply) internal {
