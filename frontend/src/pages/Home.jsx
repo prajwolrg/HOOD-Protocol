@@ -1,15 +1,18 @@
 import React from 'react';
 import styles from "../styles/App.module.css"
 import { Tabs, Tab, Row, Col } from 'react-bootstrap'
-import Overview from '../components/Overview';
-import UserOverview from '../components/UserOverview';
-import Market from '../components/Market';
-import UserMarket from '../components/UserMarket';
-import { ReserveJson } from '../consts/Reservelist';
-import { useState } from 'react';
-import "../styles/overwrite-bootstrap.css"
+import React from "react";
+import styles from "../styles/App.module.css";
+import { Tabs, Tab, Row, Col } from "react-bootstrap";
+import Overview from "../components/Overview";
+import UserOverview from "../components/UserOverview";
+import Market from "../components/Market";
+import UserMarket from "../components/UserMarket";
+import { ReserveJson } from "../consts/Reservelist";
+import { useState } from "react";
+import "../styles/overwrite-bootstrap.css";
 
-const Home = ({addr}) => {
+const Home = ({ addr }) => {
   const [reserves] = useState(ReserveJson);
 
   return (
