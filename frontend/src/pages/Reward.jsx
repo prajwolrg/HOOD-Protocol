@@ -5,17 +5,19 @@ import styles from "../styles/App.module.css";
 import RewardOverview from "../components/RewardOverview";
 import UserRewardOverview from "../components/UserRewardOverview";
 
-const Reward = ({addr}) => {
+const Reward = ({ addr }) => {
   return (
     <>
       <p className={styles.title}> Rewards</p>
       <p className={styles.h1}> Overview </p>
       <Tabs bg="dark">
+        {addr ? (
+          <Tab eventKey="profile" title="User">
+            <UserRewardOverview addr={addr} />
+          </Tab>
+        ) : null}
         <Tab eventKey="home" title="Market">
           <RewardOverview />
-        </Tab>
-        <Tab eventKey="profile" title="User">
-          <UserRewardOverview addr={addr}/>
         </Tab>
       </Tabs>
       <br />
