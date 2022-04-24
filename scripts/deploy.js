@@ -11,7 +11,6 @@ function BigN(n) {
 async function main() {
   contracts = {}
 
-
   const AddressProvider = await ethers.getContractFactory("AddressProvider")
 
   const Config = await ethers.getContractFactory("Config")
@@ -88,7 +87,7 @@ async function main() {
   console.log('minting done!')
 
   const tx = await initializer.initializeReserve(contracts['usd']);
-  const receipt = tx.wait()
+  const receipt = await tx.wait()
   console.log(receipt)
   console.log("reserve initialized")
   await initializer.initializeReserve(contracts['nrs']);
