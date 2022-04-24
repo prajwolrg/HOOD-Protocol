@@ -1,34 +1,34 @@
 // matic
-// export const ReserveJson = [
-//     {
-//         symbol: "usd",
-//         address: "0x1D62641d481572029eC2950d2e705B024015723F",
-//     },
-//     {
-//         symbol: "nrs",
-//         address: "0xa25a1BaC1aa8BdC67f6d06CeE489dd60bB3a4ba4",
-//     },
-//     {
-//         symbol: "indg",
-//         address: "0xB9FD7782B6C856e2B961e62f9Ab66394F45b7916",
-//     },
-// ];
-
-// harmony
 export const ReserveJson = [
     {
         symbol: "usd",
-        address: "0xe1B26055302c070c898a2502FE833974B880c6a3",
+        address: "0xA00c54Fad4304dd36D6224a410bcACC6869957cc",
     },
     {
         symbol: "nrs",
-        address: "0xb73d92F4E7C5c5aFf9f28C37C15BcC7Aef6341a3",
+        address: "0x238a7eB35b0663be95BB259cEF98c01c2F71e196",
     },
     {
         symbol: "indg",
-        address: "0x4Aa96E8c1B155e20a28F528cE19Ac90243Be10d9",
+        address: "0xD3c029313fe961EA7fc6B3a1dA71612e665690aB",
     },
 ];
+
+// harmony
+// export const ReserveJson = [
+//     {
+//         symbol: "usd",
+//         address: "0xe1B26055302c070c898a2502FE833974B880c6a3",
+//     },
+//     {
+//         symbol: "nrs",
+//         address: "0xb73d92F4E7C5c5aFf9f28C37C15BcC7Aef6341a3",
+//     },
+//     {
+//         symbol: "indg",
+//         address: "0x4Aa96E8c1B155e20a28F528cE19Ac90243Be10d9",
+//     },
+// ];
 
 // hardhat node
 // export const ReserveJson = [
