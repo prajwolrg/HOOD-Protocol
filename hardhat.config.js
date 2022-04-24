@@ -35,6 +35,10 @@ module.exports = {
     harmony_testnet: {
       url: `https://api.s0.b.hmny.io`,
       accounts: [`0x${PRIVATE_KEY}`]
+    },
+    hardhat_node: {
+      url: `http://127.0.0.1:8545`,
+      accounts: [`0x${PRIVATE_KEY}`]
     }
   }
 };

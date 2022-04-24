@@ -33,46 +33,50 @@ const UserMarket = ({ user, symbol, reserve }) => {
         async function fetchData() {
             if (user) {
                 setUserActive(true);
-                const provider = new ethers.providers.Web3Provider(
-                    window.ethereum
-                );
-                const dataProvider = new ethers.Contract(
-                    Contracts.dataProvider,
-                    DataProviderArtifact.abi,
-                    provider
-                );
-                const asset = new ethers.Contract(
-                    reserve,
-                    ERC20Artifact.abi,
-                    provider
-                );
-                const value = await dataProvider.getReserveData(reserve);
-
-                setLiquidityRate(hexRates(value.liquidityRate));
-                setBorrowRate(hexRates(value.borrowRate));
-                const availableLiquidity = value.availableLiquidity;
-
-                const response = await dataProvider.getUserReserveData(
-                    reserve,
-                    user
-                );
-                setTotalLiquidity(response.totalLiquidity);
-                setTotalBorrows(response.totalBorrows);
-
-                const userBalance = await asset.balanceOf(user);
-                setUserBalance(userBalance);
-
-                const availableBorrows =
-                    await dataProvider.reserveAvailableBorrows(reserve, user);
-                if (availableLiquidity.gt(availableBorrows)) {
-                    setMaxBorrows(availableBorrows);
-                } else {
-                    setMaxBorrows(availableLiquidity);
-                }
+                await stateChange();
             }
         }
         fetchData();
     }, [reserve, user]);
+
+    const stateChange = async () => {
+        const provider = new ethers.providers.Web3Provider(
+            window.ethereum
+        );
+        const dataProvider = new ethers.Contract(
+            Contracts.dataProvider,
+            DataProviderArtifact.abi,
+            provider
+        );
+        const asset = new ethers.Contract(
+            reserve,
+            ERC20Artifact.abi,
+            provider
+        );
+        const value = await dataProvider.getReserveData(reserve);
+
+        setLiquidityRate(hexRates(value.liquidityRate));
+        setBorrowRate(hexRates(value.borrowRate));
+        const availableLiquidity = value.availableLiquidity;
+
+        const response = await dataProvider.getUserReserveData(
+            reserve,
+            user
+        );
+        setTotalLiquidity(response.totalLiquidity);
+        setTotalBorrows(response.totalBorrows);
+
+        const userBalance = await asset.balanceOf(user);
+        setUserBalance(userBalance);
+
+        const availableBorrows =
+            await dataProvider.reserveAvailableBorrows(reserve, user);
+        if (availableLiquidity.gt(availableBorrows)) {
+            setMaxBorrows(availableBorrows);
+        } else {
+            setMaxBorrows(availableLiquidity);
+        }
+    }
 
     const [show, setShow] = useState(false);
     const [newAmount, setnewAmount] = useState(null);
@@ -135,7 +139,6 @@ const UserMarket = ({ user, symbol, reserve }) => {
         if (newBorrows.gt(BigN(totalBorrows))) {
             const amountToBorrow = newBorrows.sub(toBigNumber(totalBorrows));
             setBorrowAmount(amountToBorrow.toString());
-            console.log(amountToBorrow.toString());
             setTxn("borrow");
         } else if (newBorrows.lt(BigN(totalBorrows))) {
             const amountToRepay = toBigNumber(totalBorrows).sub(newBorrows);
@@ -161,6 +164,7 @@ const UserMarket = ({ user, symbol, reserve }) => {
             const nextReceipt = await nextTx.wait();
             if (nextReceipt.status === 1) {
                 setSuccess("true");
+                stateChange()
             } else {
                 setSuccess("false");
             }
@@ -179,6 +183,7 @@ const UserMarket = ({ user, symbol, reserve }) => {
         const receipt = await tx.wait();
         if (receipt.status === 1) {
             setSuccess("true");
+            stateChange()
         }
     };
 
@@ -198,6 +203,7 @@ const UserMarket = ({ user, symbol, reserve }) => {
             const nextReceipt = await nextTx.wait();
             if (nextReceipt.status === 1) {
                 setSuccess("true");
+                stateChange()
             } else {
                 setSuccess("false");
             }
@@ -224,6 +230,7 @@ const UserMarket = ({ user, symbol, reserve }) => {
         const receipt = await tx.wait();
         if (receipt.status === 1) {
             setSuccess("true");
+            stateChange()
         } else {
             setSuccess("false");
         }

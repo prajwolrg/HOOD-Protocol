@@ -11,7 +11,6 @@ function BigN(n) {
 async function main() {
   contracts = {}
 
-
   const AddressProvider = await ethers.getContractFactory("AddressProvider")
 
   const Config = await ethers.getContractFactory("Config")
@@ -41,13 +40,13 @@ async function main() {
   pool = await Pool.deploy(ap)
   contracts['lendingPool'] = pool.address
   data = await DataProvider.deploy(ap)
-  contracts['lendingPoolDataProvider'] = data.address
+  contracts['dataProvider'] = data.address
   initializer = await ReserveInitializer.deploy(ap)
   contracts['initializer'] = initializer.address
   oracle = await Oracle.deploy()
   contracts['oracle'] = oracle.address
   rewards = await Rewards.deploy(ap)
-  contracts['rewards'] = rewards.address
+  contracts['reward'] = rewards.address
   hood = await Hood.deploy(ap)
   contracts['hoodToken'] = hood.address
 
@@ -80,21 +79,16 @@ async function main() {
   contracts['indg'] = asset3Addr
 
   console.table(contracts)
-
-  await rewards.initializeAssetConfig(await core.getReserveHTokenAddress(asset1.address),  BigN(20 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveDTokenAddress(asset1.address),  BigN(10 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveHTokenAddress(asset2.address),  BigN(20 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveDTokenAddress(asset2.address),  BigN(10 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveHTokenAddress(asset3.address),  BigN(20 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveDTokenAddress(asset3.address),  BigN(10 * 10 ** 16))
-
   console.log(contracts)
+
   await asset1.mint('0x30eCA824fff4AFeF3f72Abd2FB86c0A01AC0f8Aa', BigN(999 * 10 ** 18))
   await asset2.mint('0x30eCA824fff4AFeF3f72Abd2FB86c0A01AC0f8Aa', BigN(999 * 10 ** 18))
   await asset3.mint('0x30eCA824fff4AFeF3f72Abd2FB86c0A01AC0f8Aa', BigN(999 * 10 ** 18))
   console.log('minting done!')
 
   const tx = await initializer.initializeReserve(contracts['usd']);
+  const receipt = await tx.wait()
+  console.log(receipt)
   console.log("reserve initialized")
   await initializer.initializeReserve(contracts['nrs']);
   console.log("reserve initialized")

@@ -1,6 +1,7 @@
 import React from "react";
 import { Row, Col } from "react-bootstrap";
 import styles from "../styles/App.module.css";
+import { ReserveJson } from "../consts/Reservelist";
 
 const RewardOverview = () => {
 	return (
@@ -11,24 +12,14 @@ const RewardOverview = () => {
 						Daily Rewards <br />
 						9000
 					</Col>
-					<Col>
-						HUSD Rewards
+					{ReserveJson.map(i => <Col key={i.address}>
+						{i.symbol.toUpperCase()} Rewards
 						<br />
 						3000
-					</Col>
-					<Col>
-						HNRS Rewards
-						<br />
-						3000
-					</Col>
-					<Col>
-						NEWT Rewards
-						<br />
-						3000
-					</Col>
+					</Col>)}
 				</Row>
 			</div>
-			<br/>
+			<br />
 			<div className={styles.topMargin} />
 			<p className={styles.h1}>Further Details</p>{" "}
 			<div className={styles.box}>
@@ -43,7 +34,7 @@ const RewardOverview = () => {
 						10%
 					</Col>
 				</Row>
-			</div>	
+			</div>
 		</>
 	);
 };
