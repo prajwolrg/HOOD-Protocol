@@ -11,6 +11,8 @@ const LeftBar = () => {
         <Link to="/" className={styles.hoverOver}> <span className={styles.head} >Home</span></Link>
         <br/><br/>
         <Link to="/reward" className={styles.hoverOver}> <span className={styles.head} >Rewards</span></Link>
+        <br/><br/>
+        <Link to="/transfers" className={styles.hoverOver}> <span className={styles.head} >Transfers</span></Link>
       </p>
     </>
   )

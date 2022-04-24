@@ -5,6 +5,7 @@ import Col from 'react-bootstrap/Col'
 import LeftBar from './LeftBar'
 import Home from "../pages/Home";
 import Reward from "../pages/Reward";
+import TokenTransfers from "../pages/TokenTransfers";
 import { Route, Routes } from 'react-router-dom';
 import styles from "../styles/App.module.css";
 
@@ -17,6 +18,7 @@ const Layout = ({addr}) => {
                     <Routes>
                         <Route path="/" element={<Home addr={addr}/>} />
                         <Route path="/reward" element={<Reward addr={addr} />} />
+                        <Route path="/transfers" element={<TokenTransfers addr={addr} />} />
                     </Routes></Col>
             </Row>
         </Container>
