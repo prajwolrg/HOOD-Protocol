@@ -4,18 +4,22 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
+const path = require("path");
 
 function BigN(n) {
     return ethers.BigNumber.from(n.toString())
 }
 async function main() {
+
+  // get deployer account
+  const [deployer] = await ethers.getSigners();
+
   contracts = {}
 
   const AddressProvider = await ethers.getContractFactory("AddressProvider")
 
   const Config = await ethers.getContractFactory("Config")
   config = await Config.deploy()
-  console.log('config', config.address);
   contracts['config'] = config.address
 
   const Core = await ethers.getContractFactory("LendingPoolCore", {
@@ -79,25 +83,17 @@ async function main() {
   contracts['indg'] = asset3Addr
 
   console.table(contracts)
-  console.log(contracts)
 
-  const txa = await asset1.mint('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', BigN(999 * 10 ** 18))
-  // console.log(await txa.wait())
-  await asset2.mint('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', BigN(999 * 10 ** 18))
-  await asset3.mint('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', BigN(999 * 10 ** 18))
+  let deployerAddr = deployer.address;
+  await asset1.mint(deployerAddr, BigN(999 * 10 ** 18))
+  await asset2.mint(deployerAddr, BigN(999 * 10 ** 18))
+  await asset3.mint(deployerAddr, BigN(999 * 10 ** 18))
 
-  await asset1.mint('0x70997970C51812dc3A010C7d01b50e0d17dc79C8', BigN(999 * 10 ** 18))
-  // console.log(await txa.wait())
-  await asset2.mint('0x70997970C51812dc3A010C7d01b50e0d17dc79C8', BigN(999 * 10 ** 18))
-  await asset3.mint('0x70997970C51812dc3A010C7d01b50e0d17dc79C8', BigN(999 * 10 ** 18))
   console.log('minting done!')
 
   const tx = await initializer.initializeReserve(contracts['usd']);
   const receipt = await tx.wait()
-  // console.log(receipt)
-  console.log("reserve initialized")
   await initializer.initializeReserve(contracts['nrs']);
-  console.log("reserve initialized")
   await initializer.initializeReserve(contracts['indg']);
   console.log("reserve initialized")
   
@@ -123,15 +119,29 @@ async function main() {
   await asset3.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
   console.log('approvals done!')
 
-  await pool.deposit(contracts['usd'], BigN(200 * 10 ** 18))
-  console.log('usd')
-  await pool.deposit(contracts['nrs'], BigN(200 * 10 ** 18))
-  console.log('nrs')
-  await pool.deposit(contracts['indg'], BigN(200 * 10 ** 18))
-  console.log('indg')
+  await pool.connect(deployer).deposit(contracts['usd'], BigN(200 * 10 ** 18))
+  await pool.connect(deployer).deposit(contracts['nrs'], BigN(200 * 10 ** 18))
+  await pool.connect(deployer).deposit(contracts['indg'], BigN(200 * 10 ** 18))
+  
+  console.log('Deposits done')
+  console.log("setup complete")
+  saveContractAdresses(contracts)
 
 }
 
+function saveContractAdresses(contractAddresses) {
+  const fs = require("fs");
+  const contractsDir = path.join(__dirname, "..", "frontend", "src", "consts");
+
+  if (!fs.existsSync(contractsDir)) {
+    fs.mkdirSync(contractsDir);
+  }
+
+  fs.writeFileSync(
+    path.join(contractsDir, "contractAddresses.json"),
+    JSON.stringify(contractAddresses, undefined, 2)
+  );
+}
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main()
