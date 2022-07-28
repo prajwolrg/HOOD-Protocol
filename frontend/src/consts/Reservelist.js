@@ -6,11 +6,11 @@ export const ReserveJson = [
         address: Contracts['usd'],
     },
     {
-        symbol: "nrs",
-        address: Contracts['nrs'],
+        symbol: "omm",
+        address: Contracts['omm'],
     },
     {
-        symbol: "indg",
-        address: Contracts["indg"],
+        symbol: "baln",
+        address: Contracts["baln"],
     },
 ];

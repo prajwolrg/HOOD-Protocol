@@ -74,13 +74,13 @@ async function main() {
   asset1Addr = asset1.address;
   contracts['usd'] = asset1Addr
 
-  asset2 = await Asset.deploy("Nepali Rupees", "NRS", 18);
+  asset2 = await Asset.deploy("Balanced Token", "BALN", 18);
   asset2Addr = asset2.address;
-  contracts['nrs'] = asset2Addr
+  contracts['baln'] = asset2Addr
 
-  asset3 = await Asset.deploy("Indigo", "INDG", 18);
+  asset3 = await Asset.deploy("Open Money Market Token", "OMM", 18);
   asset3Addr = asset3.address;
-  contracts['indg'] = asset3Addr
+  contracts['omm'] = asset3Addr
 
   console.table(contracts)
 
@@ -93,8 +93,8 @@ async function main() {
 
   const tx = await initializer.initializeReserve(contracts['usd']);
   const receipt = await tx.wait()
-  await initializer.initializeReserve(contracts['nrs']);
-  await initializer.initializeReserve(contracts['indg']);
+  await initializer.initializeReserve(contracts['baln']);
+  await initializer.initializeReserve(contracts['omm']);
   console.log("reserve initialized")
   
   await rewards.initializeAssetConfig(await core.getReserveHTokenAddress(asset1.address),  BigN(20 * 10 ** 16))
@@ -107,11 +107,11 @@ async function main() {
   // // set prices of assets    
   const newtPrice = ethers.BigNumber.from(`${parseInt(5 * 10 ** 18)}`); 
   const usdPrice = ethers.BigNumber.from(`${parseInt(1 * 10 ** 18)}`); 
-  const nrsPrice = ethers.BigNumber.from(`${parseInt((10 ** 18)/120)}`); 
+  const balnPrice = ethers.BigNumber.from(`${parseInt((10 ** 18)/120)}`); 
 
   await oracle.set_reference_data(contracts['usd'], usdPrice); // [usd][usd] = 1
-  await oracle.set_reference_data(contracts['nrs'], nrsPrice); // [nrs][usd] = 1/120
-  await oracle.set_reference_data(contracts['indg'], newtPrice); // [newt][usd] = 5
+  await oracle.set_reference_data(contracts['baln'], balnPrice); // [baln][usd] = 1/120
+  await oracle.set_reference_data(contracts['omm'], newtPrice); // [newt][usd] = 5
 
 
   await asset1.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
@@ -120,8 +120,8 @@ async function main() {
   console.log('approvals done!')
 
   await pool.connect(deployer).deposit(contracts['usd'], BigN(200 * 10 ** 18))
-  await pool.connect(deployer).deposit(contracts['nrs'], BigN(200 * 10 ** 18))
-  await pool.connect(deployer).deposit(contracts['indg'], BigN(200 * 10 ** 18))
+  await pool.connect(deployer).deposit(contracts['baln'], BigN(200 * 10 ** 18))
+  await pool.connect(deployer).deposit(contracts['omm'], BigN(200 * 10 ** 18))
   
   console.log('Deposits done')
   console.log("setup complete")
