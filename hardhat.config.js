@@ -1,4 +1,5 @@
 require("@nomiclabs/hardhat-waffle");
+require('dotenv').config()
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -23,7 +24,7 @@ require("@nomiclabs/hardhat-waffle");
 // To export your private key from Metamask, open Metamask and
 // go to Account Details > Export Private Key
 // Be aware of NEVER putting real Ether into testing accounts
-const PRIVATE_KEY = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+const PRIVATE_KEY = process.env.ICE_PRIVATE_KEY;
 
 
 
@@ -40,6 +41,14 @@ module.exports = {
     },
     hardhat_node: {
       url: `http://127.0.0.1:8545`,
+      accounts: [`0x${PRIVATE_KEY}`]
+    },
+    ganache_node: {
+      url: `http://127.0.0.1:7545`,
+      accounts: [`0x${PRIVATE_KEY}`]
+    },
+    arctic: {
+      url: `https://arctic-rpc.icenetwork.io:9933`,
       accounts: [`0x${PRIVATE_KEY}`]
     }
   }

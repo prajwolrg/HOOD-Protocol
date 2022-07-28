@@ -9,6 +9,7 @@
     "hardhat": "^2.8.2"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^2.5.1"
+    "@openzeppelin/contracts": "^2.5.1",
+    "dotenv": "^16.0.1"
   }
 }
