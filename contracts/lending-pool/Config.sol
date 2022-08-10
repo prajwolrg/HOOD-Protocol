@@ -81,7 +81,7 @@ library Config {
 
             uint256 cumulatedLiquidityInterest = calculateLinearInterest(currentLiquidityRate, lastUpdateTimestamp);
             self.liquidityCumulativeIndex = cumulatedLiquidityInterest.rayMul(self.liquidityCumulativeIndex);
-            uint256 cumulativeBorrowInterest = calculateLinearInterest(currentBorrowRate, lastUpdateTimestamp);
+            uint256 cumulativeBorrowInterest = calculateCompoundedInterest(currentBorrowRate, lastUpdateTimestamp);
             self.borrowCumulativeIndex = cumulativeBorrowInterest.rayMul(self.borrowCumulativeIndex);
         }
     }
@@ -92,5 +92,14 @@ library Config {
         uint256 timeDelta = timeDifference.wadToRay().rayDiv(SECONDS_PER_YEAR.wadToRay());
         return _rate.rayMul(timeDelta).add(WadRayMath.ray());
     }
+
+    function calculateCompoundedInterest(uint256 _rate, uint40 _lastUpdateTimestamp)
+    internal view returns (uint256)
+    {
+        uint256 timeDifference = block.timestamp.sub(uint256(_lastUpdateTimestamp));
+        uint256 ratePerSecond = _rate.div(SECONDS_PER_YEAR);
+        return ratePerSecond.add(WadRayMath.ray()).rayPow(timeDifference);
+    }
+
 
 }
