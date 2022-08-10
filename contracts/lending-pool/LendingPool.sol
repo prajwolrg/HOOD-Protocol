@@ -108,7 +108,6 @@ contract LendingPool {
 	function borrow(address _reserve, uint _amount) 
 		external
 		onlyActiveReserve(_reserve)
-		onlyUnfreezedReserve(_reserve)
 		onlyAmountGreaterThanZero(_amount)
 	{
 		(,,,,uint availableLiquidity,,,,,) = dataProvider.getReserveData(_reserve);
