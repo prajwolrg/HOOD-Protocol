@@ -104,8 +104,8 @@ contract DToken is ERC20, ERC20Detailed {
             return 0;
         }
         uint256 assetIndex = core.getReserveNormalizedDebt(underlyingTokenAddress);
-        return currentPrincipalTotalSupply.wadToRay().rayMul(assetIndex).rayToWad();
-
+        uint256 cumulatedIndex = core.getReserveBorrowCumulativeIndex(underlyingTokenAddress);
+        return currentPrincipalTotalSupply.wadToRay().rayMul(assetIndex).rayDiv(cumulatedIndex).rayToWad(); 
     }
 
     function cumulateBalanceInternal( address _user) 

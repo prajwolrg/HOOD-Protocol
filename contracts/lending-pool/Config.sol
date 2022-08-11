@@ -6,6 +6,7 @@ import "hardhat/console.sol";
 import "../utils/WadRayMath.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
+//Rename to Reserve?
 library Config {
     
     using WadRayMath for uint256;
@@ -67,7 +68,7 @@ library Config {
     function getNormalizedDebt(ReserveData storage self) 
     internal view returns (uint256)
     {
-        return calculateLinearInterest(
+        return calculateCompoundedInterest(
             self.borrowRate, 
             self.lastUpdateTimestamp
             ).rayMul(self.borrowCumulativeIndex);
