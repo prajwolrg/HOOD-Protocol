@@ -6,6 +6,8 @@
 const hre = require("hardhat");
 const path = require("path");
 
+const ORACLE_ADDRESS = "0x8c064bcf7c0da3b3b090babfe8f3323534d84d68"
+
 function BigN(n) {
     return ethers.BigNumber.from(n.toString())
 }
@@ -45,7 +47,8 @@ async function main() {
   contracts['dataProvider'] = data.address
   initializer = await ReserveInitializer.deploy(ap)
   contracts['initializer'] = initializer.address
-  oracle = await Oracle.deploy()
+
+  oracle = await Oracle.deploy(ORACLE_ADDRESS)
   contracts['oracle'] = oracle.address
 
   await addressProvider.setLendingPool(pool.address)
@@ -55,62 +58,67 @@ async function main() {
   await addressProvider.setReserveInitializer(initializer.address)
   await addressProvider.setConfigLibrary(config.address)
   await addressProvider.setPriceOracle(oracle.address)
-  await addressProvider.setHoodToken(hood.address)
 
   await core.initialize()
   await data.initialize()
   await pool.initialize()
   await initializer.initialize()
 
-  asset1 = await Asset.deploy("United States Dollar", "USD", 18);
+  asset1 = await Asset.deploy("Bitcoin", "BTC", 18);
   asset1Addr = asset1.address;
-  contracts['usd'] = asset1Addr
+  contracts['btc'] = asset1Addr
 
-  asset2 = await Asset.deploy("Balanced Token", "BALN", 18);
+  asset2 = await Asset.deploy("Ethereum", "ETH", 18);
   asset2Addr = asset2.address;
-  contracts['baln'] = asset2Addr
+  contracts['eth'] = asset2Addr
 
-  asset3 = await Asset.deploy("Open Money Market Token", "OMM", 18);
+  asset3 = await Asset.deploy("United States Dollar", "USD", 18);
   asset3Addr = asset3.address;
-  contracts['omm'] = asset3Addr
+  contracts['usd'] = asset3Addr
 
   console.table(contracts)
 
   let deployerAddr = deployer.address;
+  console.log(deployerAddr)
   await asset1.mint(deployerAddr, BigN(999 * 10 ** 18))
   await asset2.mint(deployerAddr, BigN(999 * 10 ** 18))
   await asset3.mint(deployerAddr, BigN(999 * 10 ** 18))
 
   console.log('minting done!')
 
-  const tx = await initializer.initializeReserve(contracts['usd']);
-  const receipt = await tx.wait()
-  await initializer.initializeReserve(contracts['baln']);
-  await initializer.initializeReserve(contracts['omm']);
+  await initializer.initializeReserve(contracts['btc']);
+  await initializer.initializeReserve(contracts['eth']);
+  await initializer.initializeReserve(contracts['usd']);
   console.log("reserve initialized")
   
-  // // set prices of assets    
-  const newtPrice = ethers.BigNumber.from(`${parseInt(5 * 10 ** 18)}`); 
-  const usdPrice = ethers.BigNumber.from(`${parseInt(1 * 10 ** 18)}`); 
-  const balnPrice = ethers.BigNumber.from(`${parseInt((10 ** 18)/120)}`); 
+  // // // set prices of assets    
+  // const newtPrice = ethers.BigNumber.from(`${parseInt(5 * 10 ** 18)}`); 
+  // const usdPrice = ethers.BigNumber.from(`${parseInt(1 * 10 ** 18)}`); 
+  // const balnPrice = ethers.BigNumber.from(`${parseInt((10 ** 18)/120)}`); 
 
-  await oracle.set_reference_data(contracts['usd'], usdPrice); // [usd][usd] = 1
-  await oracle.set_reference_data(contracts['baln'], balnPrice); // [baln][usd] = 1/120
-  await oracle.set_reference_data(contracts['omm'], newtPrice); // [newt][usd] = 5
+  // await oracle.set_reference_data(contracts['usd'], usdPrice); // [usd][usd] = 1
+  // await oracle.set_reference_data(contracts['baln'], balnPrice); // [baln][usd] = 1/120
+  // await oracle.set_reference_data(contracts['omm'], newtPrice); // [newt][usd] = 5
 
 
-  await asset1.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
-  await asset2.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
-  await asset3.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
+  tx = await asset1.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
+  await tx.wait()
+  tx = await asset2.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
+  await tx.wait()
+  tx = await asset3.approve(contracts['lendingPoolCore'], BigN(200 * 10 ** 18))
+  await tx.wait()
   console.log('approvals done!')
 
-  await pool.connect(deployer).deposit(contracts['usd'], BigN(200 * 10 ** 18))
-  await pool.connect(deployer).deposit(contracts['baln'], BigN(200 * 10 ** 18))
-  await pool.connect(deployer).deposit(contracts['omm'], BigN(200 * 10 ** 18))
-  
+  tx = await pool.deposit(contracts['btc'], BigN(200 * 10 ** 18))
+  await tx.wait()
+  tx = await pool.deposit(contracts['eth'], BigN(200 * 10 ** 18))
+  await tx.wait()
+  tx = await pool.deposit(contracts['usd'], BigN(200 * 10 ** 18))
+  await tx.wait()
   console.log('Deposits done')
-  console.log("setup complete")
+
   saveContractAdresses(contracts)
+  console.log("setup complete")
 
 }
 

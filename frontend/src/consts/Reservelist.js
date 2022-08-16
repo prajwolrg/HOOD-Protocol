@@ -2,15 +2,15 @@ import { Contracts } from "../consts/Contracts";
 
 export const ReserveJson = [
     {
-        symbol: "usd",
-        address: Contracts['usd'],
+        symbol: "BTC",
+        address: Contracts['btc'],
     },
     {
-        symbol: "omm",
-        address: Contracts['omm'],
+        symbol: "ETH",
+        address: Contracts['eth'],
     },
     {
-        symbol: "baln",
-        address: Contracts["baln"],
+        symbol: "USD",
+        address: Contracts["usd"],
     },
 ];
