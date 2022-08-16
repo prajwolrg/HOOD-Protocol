@@ -17,7 +17,6 @@ contract AddressProvider {
 	bytes32 private constant ETH_ADDRESS = "ETH_ADDRESS";
 	bytes32 private constant RESERVE_INITIALIZER = "RESERVE_INITIALIZER";
 	bytes32 private constant CONFIG_LIBRARY = "CONFIG_LIBRARY";
-	bytes32 private constant HOOD_TOKEN = "HOOD_TOKEN";
 
 	event LendingPoolUpdated(address indexed  _updatedAddress);
 	event LendingPoolCoreUpdated(address indexed  _updatedAddress);
@@ -26,7 +25,6 @@ contract AddressProvider {
 	event EthAddressUpdated(address indexed  _updatedAddress);
 	event ReserveInitializerUpdated(address indexed  _updatedAddress);
 	event ConfigLibraryUpdated(address indexed  _updatedAddress);
-	event HoodTokenUpdated(address indexed _updatedAddress);
 
 	constructor() public {
 		owner = msg.sender;
@@ -95,21 +93,6 @@ contract AddressProvider {
 	*/
 	function getConfigLibrary() public view returns (address) {
 		return getAddress(CONFIG_LIBRARY);
-	}
-
-	/*
-	* Returns HOOD Token Address
-	*/
-	function getHoodToken() public view returns (address) {
-		return getAddress(HOOD_TOKEN);
-	}
-
-	/*
-	* Sets HOOD Token address
-	*/
-	function setHoodToken(address _hoodToken) public onlyOwner {
-		setAddress(HOOD_TOKEN, _hoodToken);
-		emit HoodTokenUpdated(_hoodToken);
 	}
 
 	/*

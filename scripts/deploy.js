@@ -33,7 +33,6 @@ async function main() {
   const Pool = await ethers.getContractFactory("LendingPool")
   const DataProvider = await ethers.getContractFactory("LendingPoolDataProvider")
   const ReserveInitializer = await ethers.getContractFactory("ReserveInitializer")
-  const Hood = await ethers.getContractFactory("HoodToken")
 
   addressProvider = await AddressProvider.deploy()
   ap = addressProvider.address
@@ -48,8 +47,6 @@ async function main() {
   contracts['initializer'] = initializer.address
   oracle = await Oracle.deploy()
   contracts['oracle'] = oracle.address
-  hood = await Hood.deploy(ap)
-  contracts['hoodToken'] = hood.address
 
   await addressProvider.setLendingPool(pool.address)
   await addressProvider.setLendingPoolCore(core.address)
