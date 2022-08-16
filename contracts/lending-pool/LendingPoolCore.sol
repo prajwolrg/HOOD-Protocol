@@ -129,7 +129,7 @@ contract LendingPoolCore {
     {
         lastUpdateTimestamp[_user][_reserve] = block.timestamp;
         DToken dToken = DToken(getReserveDTokenAddress(_reserve));
-        dToken.mintOnBorrow(_user, _amount);
+        dToken.mintOnBorrow(_user, _amount, getReserveBorrowCumulativeIndex(_reserve));
         updateCumulativeIndexes(_reserve);
         updateReserveInterestRatesAndTimestampInternal(_reserve, 0, _amount);
     }

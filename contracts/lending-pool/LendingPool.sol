@@ -91,9 +91,9 @@ contract LendingPool {
 	{
 		HToken hToken = HToken(core.getReserveHTokenAddress(_reserve));
 
-		core.updateStateOnDeposit(_reserve, _amount);
+		hToken.mintOnDeposit(msg.sender, _amount, core.getReserveLiquidityCumulativeIndex(_reserve));
 
-		hToken.mintOnDeposit(msg.sender, _amount);
+		core.updateStateOnDeposit(_reserve, _amount);
 
 		core.transferToReserve(_reserve, msg.sender, _amount);
 

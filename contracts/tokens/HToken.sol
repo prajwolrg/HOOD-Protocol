@@ -54,12 +54,13 @@ contract HToken is ERC20, ERC20Detailed {
     event MintOnDeposit(address indexed account, uint amount);
     event BurnOnRedeem(address indexed account, uint amount);
 
-    function mintOnDeposit(address _account, uint256 _amount) 
+    function mintOnDeposit(address _account, uint256 _amount, uint256 _index) 
         external 
        onlyLendingPool
     {
         cumulateBalanceInternal(_account);
-    	_mint(_account, _amount);
+        uint256 _scaledAmount = _amount.rayDiv(_index);
+    	_mint(_account, _scaledAmount);
         uint256 currentBalance = balanceOf(_account);
         uint256 _totalSupply = totalSupply();
     	emit MintOnDeposit(_account, _amount);

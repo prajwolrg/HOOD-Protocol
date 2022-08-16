@@ -57,12 +57,13 @@ contract DToken is ERC20, ERC20Detailed {
         return false;
     }
 
-    function mintOnBorrow(address _account, uint256 _amount) 
+    function mintOnBorrow(address _account, uint256 _amount, uint256 _index) 
         external 
         onlyLendingPoolCore
     {
         cumulateBalanceInternal(_account);
-    	_mint(_account, _amount);
+        uint256 _scaledAmount = _amount.rayDiv(_index);
+    	_mint(_account, _scaledAmount);
         uint256 currentBalance = balanceOf(_account);
         uint256 _totalSupply = totalSupply();
     	emit MintOnBorrow(_account, _amount);
