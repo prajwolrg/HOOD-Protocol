@@ -69,7 +69,7 @@ contract LendingPoolDataProvider {
     	) 
     {
         Oracle oracle = Oracle(addressProvider.getPriceOracle());
-        uint256 unitPrice = oracle.get_reference_data(_reserve);
+        uint256 unitPrice = oracle.getPriceInUSD(ERC20Detailed(_reserve).symbol());
     	totalLiquidity = HToken(core.getReserveHTokenAddress(_reserve)).balanceOf(_user);
 		totalBorrows = DToken(core.getReserveDTokenAddress(_reserve)).balanceOf(_user);
         totalLiquidityUSD = totalLiquidity.wadMul(unitPrice);
@@ -104,7 +104,7 @@ contract LendingPoolDataProvider {
         for(uint8 i = 0; i < len; i++ ) {
             vars.reserveAddress = reserveList[i];
             (,vars.borrowRate, vars.liquidityRate, vars.totalLiquidity,,vars.totalBorrows,,,,) = getReserveData(vars.reserveAddress);
-            vars.reservePriceInUSD = oracle.get_reference_data(vars.reserveAddress);
+            vars.reservePriceInUSD = oracle.getPriceInUSD(ERC20Detailed(vars.reserveAddress).symbol());
             vars.totalLiquidityUSD = vars.totalLiquidity.wadMul(vars.reservePriceInUSD);
             vars.totalBorrowsUSD = vars.totalBorrows.wadMul(vars.reservePriceInUSD);
             totalLiquidity += vars.totalLiquidityUSD;
@@ -143,7 +143,7 @@ contract LendingPoolDataProvider {
 
     	for(uint8 i = 0; i < reserveList.length; i++ ) {
     		vars.reserveAddress = reserveList[i];
-            vars.reservePriceInUSD = oracle.get_reference_data(vars.reserveAddress);
+            vars.reservePriceInUSD = oracle.getPriceInUSD(ERC20Detailed(vars.reserveAddress).symbol());
     		vars.reserveHTokenBalance = HToken(core.getReserveHTokenAddress(vars.reserveAddress)).balanceOf(_user);
 			vars.reserveDTokenBalance = DToken(core.getReserveDTokenAddress(vars.reserveAddress)).balanceOf(_user);
             vars.hTokenBalanceUSD = vars.reserveHTokenBalance.wadMul(vars.reservePriceInUSD);
@@ -175,14 +175,14 @@ contract LendingPoolDataProvider {
     public view returns (uint256) {
         Oracle oracle = Oracle(addressProvider.getPriceOracle());
         uint _availableBorrowsUSD = availableBorrowsUSD(_user);
-        uint unitPrice = oracle.get_reference_data(_reserve);
+        uint unitPrice = oracle.getPriceInUSD(ERC20Detailed(_reserve).symbol());
         return _availableBorrowsUSD.wadDiv(unitPrice);
     }
 
     function calculateCollateralNeeded(address _reserve, uint256 _amount, uint256 _totalBorrowsUSD, uint256 _ltv) 
     public view returns(uint256) {
         Oracle oracle = Oracle(addressProvider.getPriceOracle());
-        uint256 unitPrice = oracle.get_reference_data(_reserve);       
+        uint unitPrice = oracle.getPriceInUSD(ERC20Detailed(_reserve).symbol());
     	uint256 newTotalBorrows = _amount.wadMul(unitPrice) + _totalBorrowsUSD;
         return newTotalBorrows.mul(2);
     }
@@ -204,7 +204,7 @@ contract LendingPoolDataProvider {
     function isBalanceDecreaseAllowed(address _reserve, address _user, uint256 _amount) 
     public view returns (bool) {
         Oracle oracle = Oracle(addressProvider.getPriceOracle());
-        uint256 unitPrice = oracle.get_reference_data(_reserve);  
+        uint unitPrice = oracle.getPriceInUSD(ERC20Detailed(_reserve).symbol());
         uint256 amountToDecreaseUSD = _amount.wadMul(unitPrice);
         (uint256 totalLiquidityUSD, ,uint256 totalBorrowsUSD,,,,) = getUserAccountData(_user);
         uint256 newLiquidityUSD = totalLiquidityUSD.add(amountToDecreaseUSD);

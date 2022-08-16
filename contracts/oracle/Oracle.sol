@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.5.0;
+pragma solidity >=0.4.21 <0.7.0;
+pragma experimental ABIEncoderV2;
 
 /**
 * @title HOOD Oracle 
@@ -7,44 +8,38 @@ pragma solidity ^0.5.0;
 **/
 
 
-contract Oracle {
-    string public name = "Oracle";
-    address public owner;
-    mapping(address => uint256) internal reference_data; // [QUOTE] => BASE USD
-    
-    event PriceSet(
-        address indexed _quote,
-        uint256 indexed _price);
-
-    constructor() public {
-        owner = msg.sender;
-    }
-    
-    /*
-    * Modifier
-    * Only owner/ contract deployer can call method which has this modifier
-    */
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Oracle: Sender not owner error");
-        _;
+interface IStdReference {
+    /// A structure returned whenever someone requests for standard reference data.
+    struct ReferenceData {
+        uint256 rate; // base/quote exchange rate, multiplied by 1e18.
+        uint256 lastUpdatedBase; // UNIX epoch of the last time when base price gets updated.
+        uint256 lastUpdatedQuote; // UNIX epoch of the last time when quote price gets updated.
     }
 
-    /*
-    * Returns the price for _quote set in the contract in terma os uSD
-    * reference_data["ETH"]["USD"]
-    */    
-    function get_reference_data(address _quote)
-    public view returns(uint256) {
-        return reference_data[_quote];
+    /// Returns the price data for the given base/quote pair. Revert if not available.
+    function getReferenceData(string calldata _base, string calldata _quote)
+        external
+        view
+        returns (ReferenceData memory);
+
+    /// Similar to getReferenceData, but with multiple base/quote pairs at once.
+    function getReferenceDataBulk(string[] calldata _bases, string[] calldata _quotes)
+        external
+        view
+        returns (ReferenceData[] memory);
+}
+
+
+contract Oracle{
+
+    IStdReference ref;
+
+    constructor(IStdReference _ref) public {
+        ref = _ref;
     }
 
-    /*
-    * Sets the price for _quote in terms of USD
-    * Only owner can call this method
-    * PriceSet eventlog
-    */
-    function set_reference_data(address _quote, uint _price) public onlyOwner {
-        reference_data[_quote] = _price;
-        emit PriceSet(_quote, _price);
+    function getPriceInUSD(string memory _base) public view returns (uint256){
+        IStdReference.ReferenceData memory data = ref.getReferenceData(_base, 'USD');
+        return data.rate;
     }
 }
