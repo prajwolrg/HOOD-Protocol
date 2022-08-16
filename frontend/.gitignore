@@ -12,9 +12,9 @@
 # production
 /build
 
-# contract abi
-/src/consts/contractAddresses.json
-/src/contracts
+# # contract abi
+# /src/consts/contractAddresses.json
+# /src/contracts
 
 # misc
 .DS_Store

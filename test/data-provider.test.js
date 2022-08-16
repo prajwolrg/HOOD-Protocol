@@ -19,7 +19,6 @@ beforeEach(async function () {
     const Asset = await ethers.getContractFactory("Asset")
     const Oracle = await ethers.getContractFactory("Oracle")
     const Pool = await ethers.getContractFactory("LendingPool")
-    const RewardDistribution = await ethers.getContractFactory("RewardDistribution")
     const HoodToken = await ethers.getContractFactory("HoodToken")
     const DataProvider = await ethers.getContractFactory("LendingPoolDataProvider")
     const ReserveInitializer = await ethers.getContractFactory("ReserveInitializer")
@@ -29,7 +28,6 @@ beforeEach(async function () {
     core = await Core.deploy(ap)
     pool = await Pool.deploy(ap)
     data = await DataProvider.deploy(ap)
-    reward = await RewardDistribution.deploy(ap)
     hood = await HoodToken.deploy(ap)
     initializer = await ReserveInitializer.deploy(ap)
     oracle = await Oracle.deploy()
@@ -41,14 +39,12 @@ beforeEach(async function () {
     addressProvider.setReserveInitializer(initializer.address)
     addressProvider.setConfigLibrary(config.address)
     addressProvider.setPriceOracle(oracle.address)
-    addressProvider.setRewardDistribution(reward.address)
     addressProvider.setHoodToken(hood.address)
 
     await core.initialize()
     await data.initialize()
     await pool.initialize()
     await initializer.initialize()
-    await reward.initialize()
 
     asset1 = await Asset.deploy("USD Hood", "USDH", 18);
     asset1Addr = asset1.address;
