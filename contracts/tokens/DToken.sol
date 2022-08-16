@@ -8,7 +8,6 @@ pragma solidity ^0.5.0;
 
 import "../configuration/AddressProvider.sol";
 import "../lending-pool/LendingPoolCore.sol";
-import "../rewards/RewardDistribution.sol";
 import "hardhat/console.sol";
 import "../utils/WadRayMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -66,7 +65,6 @@ contract DToken is ERC20, ERC20Detailed {
     	_mint(_account, _amount);
         uint256 currentBalance = balanceOf(_account);
         uint256 _totalSupply = totalSupply();
-        handleAction(_account, currentBalance, _totalSupply);
     	emit MintOnBorrow(_account, _amount);
     }
 
@@ -81,7 +79,6 @@ contract DToken is ERC20, ERC20Detailed {
         }
         uint256 currentBalance = balanceOf(_account);
         uint256 _totalSupply = totalSupply();
-        handleAction(_account, currentBalance, _totalSupply);
         emit BurnOnRepay(_account, _amount);
     }
 
@@ -152,8 +149,4 @@ contract DToken is ERC20, ERC20Detailed {
         }
     }
 
-    function handleAction(address _user,uint256 _balance, uint256 _totalSupply) internal {
-        RewardDistribution rewards = RewardDistribution(addressProvider.getRewardDistribution());
-        rewards.handleAction(_user, _balance, _totalSupply);
-    }
 }

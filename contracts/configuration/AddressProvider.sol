@@ -26,7 +26,6 @@ contract AddressProvider {
 	event EthAddressUpdated(address indexed  _updatedAddress);
 	event ReserveInitializerUpdated(address indexed  _updatedAddress);
 	event ConfigLibraryUpdated(address indexed  _updatedAddress);
-	event RewardDistributionUpdated(address indexed _updatedAddress);
 	event HoodTokenUpdated(address indexed _updatedAddress);
 
 	constructor() public {
@@ -99,13 +98,6 @@ contract AddressProvider {
 	}
 
 	/*
-	* Returns Reward Distribution
-	*/
-	function getRewardDistribution() public view returns (address) {
-		return getAddress(REWARD_DISTRIBUTION);
-	}
-
-	/*
 	* Returns HOOD Token Address
 	*/
 	function getHoodToken() public view returns (address) {
@@ -126,14 +118,6 @@ contract AddressProvider {
 	function setLendingPool(address _lendingPool) public onlyOwner {
 		setAddress(LENDING_POOL, _lendingPool);
 		emit LendingPoolUpdated(_lendingPool);
-	}
-
-	/*
-	* Sets Reward Distribution address 
-	*/
-	function setRewardDistribution(address _rewardDistribution) public onlyOwner {
-		setAddress(REWARD_DISTRIBUTION, _rewardDistribution);
-		emit RewardDistributionUpdated(_rewardDistribution); 
 	}
 
 	/*

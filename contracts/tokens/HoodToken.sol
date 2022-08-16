@@ -20,9 +20,4 @@ contract HoodToken is ERC20, ERC20Detailed, ERC20Mintable {
         addressProvider = AddressProvider(_addressProvider);
     }
 
-    function mintDailyRewards() external {
-        address rewardDistribution = addressProvider.getRewardDistribution();
-        require(msg.sender == rewardDistribution, "Only rewards contract can mint");
-        _mint(rewardDistribution, DAILY_REWARD);        
-    }
 }

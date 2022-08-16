@@ -33,7 +33,6 @@ async function main() {
   const Pool = await ethers.getContractFactory("LendingPool")
   const DataProvider = await ethers.getContractFactory("LendingPoolDataProvider")
   const ReserveInitializer = await ethers.getContractFactory("ReserveInitializer")
-  const Rewards = await ethers.getContractFactory("RewardDistribution")
   const Hood = await ethers.getContractFactory("HoodToken")
 
   addressProvider = await AddressProvider.deploy()
@@ -49,8 +48,6 @@ async function main() {
   contracts['initializer'] = initializer.address
   oracle = await Oracle.deploy()
   contracts['oracle'] = oracle.address
-  rewards = await Rewards.deploy(ap)
-  contracts['reward'] = rewards.address
   hood = await Hood.deploy(ap)
   contracts['hoodToken'] = hood.address
 
@@ -62,13 +59,11 @@ async function main() {
   await addressProvider.setConfigLibrary(config.address)
   await addressProvider.setPriceOracle(oracle.address)
   await addressProvider.setHoodToken(hood.address)
-  await addressProvider.setRewardDistribution(rewards.address)
 
   await core.initialize()
   await data.initialize()
   await pool.initialize()
   await initializer.initialize()
-  await rewards.initialize()
 
   asset1 = await Asset.deploy("United States Dollar", "USD", 18);
   asset1Addr = asset1.address;
@@ -97,13 +92,6 @@ async function main() {
   await initializer.initializeReserve(contracts['omm']);
   console.log("reserve initialized")
   
-  await rewards.initializeAssetConfig(await core.getReserveHTokenAddress(asset1.address),  BigN(20 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveDTokenAddress(asset1.address),  BigN(10 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveHTokenAddress(asset2.address),  BigN(20 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveDTokenAddress(asset2.address),  BigN(10 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveHTokenAddress(asset3.address),  BigN(20 * 10 ** 16))
-  await rewards.initializeAssetConfig(await core.getReserveDTokenAddress(asset3.address),  BigN(10 * 10 ** 16))
-
   // // set prices of assets    
   const newtPrice = ethers.BigNumber.from(`${parseInt(5 * 10 ** 18)}`); 
   const usdPrice = ethers.BigNumber.from(`${parseInt(1 * 10 ** 18)}`); 
