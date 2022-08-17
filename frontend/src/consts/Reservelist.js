@@ -13,4 +13,8 @@ export const ReserveJson = [
         symbol: "USD",
         address: Contracts["usd"],
     },
+    {
+        symbol: "ICX",
+        address: Contracts["icx"],
+    },
 ];
