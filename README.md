@@ -1,10 +1,10 @@
-# HOOD Protocol
+# ICE Money Market
 
-This project is decentralized money market protocol along with a frontend for it.
+This repository contains the smart contracts as well as react frontend for a decentralized money market protocol. The code is forked from [here](https://github.com/izyak/HOOD-Protocol/) and is adjusted to support the Arctic Testnet of the ICE Blockchain.
 
 ## Folder Structure
 ```
-contracts/ :  Required solidity contracts for HOOD Protocol.
+contracts/ :  Required solidity contracts for Money Market.
 
 frontend/ : Code for frontend
 
@@ -17,13 +17,13 @@ test/ : Unit tests
 
 ### Initialize
 ```sh
-git clone git@github.com:izyak/HOOD-Protocol.git
-cd HOOD-Protocol
+git clone git@github.com:prajwolrg/ICE-Money-Market.git
+cd ICE-Money-Market
 git checkout main
 npm install
 ```
 ### Compile contracts
-Assuming you're in HOOD-Protocol Directory
+Assuming you're in ICE-Money-Market Directory
 
 ```sh
 npx hardhat compile
