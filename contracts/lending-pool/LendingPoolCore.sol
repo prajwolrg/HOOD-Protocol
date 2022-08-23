@@ -171,7 +171,7 @@ contract LendingPoolCore {
         onlyLendingPool
     {
         if ( _reserve != ETH ) {
-            require(msg.value == 0, "User is sending eth for ERC20 transfer");
+            require(msg.value == 0, "User is sending ICZ for ERC20 transfer");
             ERC20(_reserve).safeTransferFrom(_user, address(this), _amount);
         } else {
             require(msg.value == _amount, "Amount and value are different");
@@ -189,7 +189,7 @@ contract LendingPoolCore {
             ERC20(_reserve).safeTransfer(_user, _amount);            
         } else {
             (bool result, ) = _user.call.value(_amount).gas(50000)("");
-            require(result, "ETH Transfer failed.");
+            require(result, "ICZ Transfer failed.");
         }   
     }
 
